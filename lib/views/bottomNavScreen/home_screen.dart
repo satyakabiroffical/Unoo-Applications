@@ -1,8 +1,11 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:unno/apis/homePage.api.dart';
 import 'package:unno/appPreferences/appColors.dart';
 import 'package:unno/controller/bottomNav.controller.dart';
+import 'package:unno/utils/CustomNetworkImage.dart';
 import 'package:unno/utils/Custom_buttons.dart';
 import 'package:unno/utils/RouteTransition.dart';
 import 'package:unno/utils/custom_slide.dart';
@@ -21,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   BottomNavController bottomNavController = Get.find<BottomNavController>();
+  HomePageApi homePageApi = Get.put(HomePageApi());
   late ScrollController _scrollController;
   double _lastScrollOffset = 0.0;
 
@@ -49,6 +53,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
       _lastScrollOffset = currentOffset;
     });
+
+    //call home page data api
+    homePageApi.getHomePageData();
   }
 
   @override
@@ -157,82 +164,134 @@ class _HomeScreenState extends State<HomeScreen> {
               //some space
               SizedBox(height: w * .020),
 
-              //banner pic
-              Container(
-                height: w * .550,
-                width: w,
-                decoration: BoxDecoration(
-                  color: AppColors.primaryColorLight,
-                  image: const DecorationImage(
-                    image: AssetImage('assets/images/home1.png'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: w * .040,
-                    vertical: w * .040,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      //text on banner pic
-                      AppFonts.textInter(
-                        context,
-                        'donation',
-                        w * .084,
-                        FontWeight.w700,
-                        AppColors.whiteFontColor,
-                        TextAlign.start,
-                        TextOverflow.ellipsis,
-                      ),
-                      AppFonts.textInter(
-                        context,
-                        'FOR PEOPLE',
-                        w * .058,
-                        FontWeight.w700,
-                        AppColors.whiteFontColor,
-                        TextAlign.start,
-                        TextOverflow.ellipsis,
-                      ),
-
-                      //some space
-                      SizedBox(height: w * .020),
-
-                      //button on banner pic
-                      Container(
-                        height: w * .090,
-                        width: w * .360,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryColor,
-                          borderRadius: BorderRadius.circular(w * .020),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.whiteFontColor.withOpacity(.6),
-                              blurRadius: w * .030,
-                              spreadRadius: w * .001,
-                              offset: const Offset(2, 5),
+              //slider
+              Obx(
+                () =>
+                    homePageApi.gettingHomeData.value
+                        ? Skeletonizer(
+                          enabled: true,
+                          child: CarouselSlider(
+                            options: CarouselOptions(
+                              autoPlay: true,
+                              enlargeCenterPage: false,
+                              enlargeFactor: 0.8,
+                              aspectRatio: 18 / 9,
+                              viewportFraction: 1,
                             ),
-                          ],
-                        ),
-                        child: Center(
-                          child: AppFonts.textInter(
-                            context,
-                            'Donate',
-                            w * .035,
-                            FontWeight.w700,
-                            AppColors.whiteFontColor,
-                            TextAlign.start,
-                            TextOverflow.ellipsis,
+                            items:
+                                ["", ""].map((i) {
+                                  return Builder(
+                                    builder: (BuildContext context) {
+                                      return Container(
+                                        height: w * .550,
+                                        width: w,
+                                        color: Colors.grey,
+                                      );
+                                    },
+                                  );
+                                }).toList(),
                           ),
+                        )
+                        : CarouselSlider(
+                          options: CarouselOptions(
+                            autoPlay: true,
+                            enlargeCenterPage: false,
+                            enlargeFactor: 0.8,
+                            aspectRatio: 18 / 9,
+                            viewportFraction: 1,
+                          ),
+                          items:
+                              homePageApi.bannerData.map((i) {
+                                return Builder(
+                                  builder: (BuildContext context) {
+                                    return CustomImage.CustImage(
+                                      i.image,
+                                      w,
+                                      w * .550,
+                                      BoxFit.contain,
+                                    );
+                                  },
+                                );
+                              }).toList(),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
+
+              // //banner pic
+              // Container(
+              //   height: w * .550,
+              //   width: w,
+              //   decoration: BoxDecoration(
+              //     color: AppColors.primaryColorLight,
+              //     image: const DecorationImage(
+              //       image: AssetImage('assets/images/home1.png'),
+              //       fit: BoxFit.cover,
+              //     ),
+              //   ),
+
+              //   child: Padding(
+              //     padding: EdgeInsets.symmetric(
+              //       horizontal: w * .040,
+              //       vertical: w * .040,
+              //     ),
+              //     child: Column(
+              //       mainAxisAlignment: MainAxisAlignment.end,
+              //       crossAxisAlignment: CrossAxisAlignment.start,
+              //       children: [
+              //         //text on banner pic
+              //         AppFonts.textInter(
+              //           context,
+              //           'donation',
+              //           w * .084,
+              //           FontWeight.w700,
+              //           AppColors.whiteFontColor,
+              //           TextAlign.start,
+              //           TextOverflow.ellipsis,
+              //         ),
+              //         AppFonts.textInter(
+              //           context,
+              //           'FOR PEOPLE',
+              //           w * .058,
+              //           FontWeight.w700,
+              //           AppColors.whiteFontColor,
+              //           TextAlign.start,
+              //           TextOverflow.ellipsis,
+              //         ),
+
+              //         //some space
+              //         SizedBox(height: w * .020),
+
+              //         //button on banner pic
+              //         Container(
+              //           height: w * .090,
+              //           width: w * .360,
+              //           decoration: BoxDecoration(
+              //             color: AppColors.primaryColor,
+              //             borderRadius: BorderRadius.circular(w * .020),
+              //             boxShadow: [
+              //               BoxShadow(
+              //                 color: AppColors.whiteFontColor.withOpacity(.6),
+              //                 blurRadius: w * .030,
+              //                 spreadRadius: w * .001,
+              //                 offset: const Offset(2, 5),
+              //               ),
+              //             ],
+              //           ),
+              //           child: Center(
+              //             child: AppFonts.textInter(
+              //               context,
+              //               'Donate',
+              //               w * .035,
+              //               FontWeight.w700,
+              //               AppColors.whiteFontColor,
+              //               TextAlign.start,
+              //               TextOverflow.ellipsis,
+              //             ),
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
 
               //some space\
               SizedBox(height: w * .040),
@@ -246,41 +305,83 @@ class _HomeScreenState extends State<HomeScreen> {
                 );
               }),
 
-              SizedBox(
-                height: w * .900,
-                child: ListView.builder(
-                  itemCount: 3,
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: w * .010),
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: w * .030,
-                        vertical: w * .040,
+              Obx(
+                () => Skeletonizer(
+                  enabled: homePageApi.gettingHomeData.value,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: w * 0.01),
+                    child: Row(
+                      children: List.generate(
+                        homePageApi.gettingHomeData.value
+                            ? 3
+                            : homePageApi.trendingFundRaisers.length,
+                        (index) => Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: w * 0.03,
+                            vertical: w * 0.04,
+                          ),
+                          child: _homePageCommonCard(
+                            context,
+                            homePageApi.gettingHomeData.value
+                                ? 'assets/images/home2.png'
+                                : homePageApi
+                                    .trendingFundRaisers[index]
+                                    .addFundraiserImageOrVideo
+                                    .isEmpty
+                                ? ""
+                                : homePageApi
+                                    .trendingFundRaisers[index]
+                                    .addFundraiserImageOrVideo
+                                    .first,
+                            homePageApi.gettingHomeData.value
+                                ? 'My Baby Battles For His Life...'
+                                : homePageApi
+                                    .trendingFundRaisers[index]
+                                    .fundTitle,
+                            homePageApi.gettingHomeData.value
+                                ? 'by Mahendar Reddy Bakangari'
+                                : "by ${homePageApi.trendingFundRaisers[index].userId.name}",
+                            homePageApi.gettingHomeData.value
+                                ? '47726'
+                                : homePageApi
+                                    .trendingFundRaisers[index]
+                                    .totalDonationAmount
+                                    .toString(), // Placeholder amount
+                            homePageApi.gettingHomeData.value
+                                ? '47726'
+                                : homePageApi
+                                    .trendingFundRaisers[index]
+                                    .fundRequired
+                                    .toString(), // Placeholder amount
+                            homePageApi.gettingHomeData.value
+                                ? '2479'
+                                : homePageApi
+                                    .trendingFundRaisers[index]
+                                    .supporterCount
+                                    .toString(),
+                            homePageApi.gettingHomeData.value
+                                ? '28'
+                                : homePageApi
+                                    .trendingFundRaisers[index]
+                                    .remainingDays
+                                    .toString(),
+                            () {
+                              // Handle donate
+                            },
+                            () {
+                              // Handle share
+                            },
+                          ),
+                        ),
                       ),
-                      child: _homePageCommonCard(
-                        context,
-                        'assets/images/home2.png',
-                        'My Baby Battles For His Life And We Need Your Support To Save…',
-                        'by Mahendar Reddy Bakangari',
-                        '\$47,726',
-                        '\$64,705',
-                        '2479',
-                        '28',
-                        () {
-                          // Handle donate button tap
-                        },
-                        () {
-                          // Handle share button tap
-                        },
-                      ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
 
-              //some space\
+              //some space
               SizedBox(height: w * .010),
 
               //text common widget
@@ -288,31 +389,49 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Navigate to the trending screen
               }),
 
-              SizedBox(
-                height: w * .880,
-                child: ListView.builder(
-                  itemCount: 3,
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: w * .010),
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: w * .030,
-                        vertical: w * .040,
+              Obx(
+                () => Skeletonizer(
+                  enabled: homePageApi.gettingHomeData.value,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: w * 0.01),
+                    child: Row(
+                      children: List.generate(
+                        homePageApi.gettingHomeData.value
+                            ? 3
+                            : homePageApi.topNgosList.length,
+                        (index) {
+                          return Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: w * 0.03,
+                              vertical: w * 0.04,
+                            ),
+                            child: _homePageCommonCard1(
+                              context,
+                              homePageApi.gettingHomeData.value
+                                  ? 'assets/images/home3.png'
+                                  : homePageApi.topNgosList[index].image,
+                              homePageApi.gettingHomeData.value
+                                  ? 'assets/images/home4.png'
+                                  : homePageApi
+                                      .topNgosList[index]
+                                      .backGroundImage,
+                              homePageApi.gettingHomeData.value
+                                  ? 'NGO Name'
+                                  : homePageApi.topNgosList[index].name,
+                              homePageApi.gettingHomeData.value
+                                  ? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+                                  : homePageApi.topNgosList[index].about,
+                              true,
+                              false,
+                              "",
+                            ),
+                          );
+                        },
                       ),
-                      child: _homePageCommonCard1(
-                        context,
-                        'assets/images/home3.png',
-                        'assets/images/home4.png',
-                        'NGO Name',
-                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ',
-                        true,
-                        false,
-                        "",
-                      ),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
 
@@ -389,39 +508,57 @@ class _HomeScreenState extends State<HomeScreen> {
               _textViewAllCommonWidget(context, 'Top Blood Bank', () {
                 // Navigate to the trending screen
               }),
-              GestureDetector(
-                onTap: (){
-                  //
-                  Navigator.push(context, SlideLeftRoute(page:  BloodBankDetail()));
-                },
-                child: SizedBox(
-                  height: w * .880,
-                  child: ListView.builder(
-                    itemCount: 3,
+
+              //  Navigator.push(
+              //       context,
+              //       SlideLeftRoute(page: BloodBankDetail()),
+              //     );
+              Obx(
+                () => Skeletonizer(
+                  enabled: homePageApi.gettingHomeData.value,
+                  child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: w * .010),
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: w * .030,
-                          vertical: w * .040,
-                        ),
-                        child: _homePageCommonCard1(
-                          context,
-                          'assets/images/home7.png',
-                          'assets/images/home6.jpg',
-                          'Blood Bank Name',
-                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ',
-                          true,
-                          false,
-                          "",
-                        ),
-                      );
-                    },
+                    padding: EdgeInsets.symmetric(horizontal: w * 0.01),
+                    child: Row(
+                      children: List.generate(
+                        homePageApi.gettingHomeData.value
+                            ? 3
+                            : homePageApi.topBloodBanks.length,
+                        (index) {
+                          return Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: w * .030,
+                              vertical: w * .040,
+                            ),
+                            child: _homePageCommonCard1(
+                              context,
+                              homePageApi.gettingHomeData.value
+                                  ? 'assets/images/home7.png'
+                                  : homePageApi.topBloodBanks[index].image,
+                              homePageApi.gettingHomeData.value
+                                  ? 'assets/images/home8.png'
+                                  : homePageApi
+                                      .topBloodBanks[index]
+                                      .backGroundImage,
+                              homePageApi.gettingHomeData.value
+                                  ? 'Blood Bank Name'
+                                  : homePageApi.topBloodBanks[index].name,
+                              homePageApi.gettingHomeData.value
+                                  ? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+                                  : homePageApi.topBloodBanks[index].address,
+                              true,
+                              false,
+                              "",
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
               ),
+
               //some space\
               SizedBox(height: w * .040),
 
@@ -1092,17 +1229,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             //image
-            Container(
-              height: w * .300,
-              width: w * .640,
-              decoration: BoxDecoration(
-                color: AppColors.whiteFontColor,
-                image: DecorationImage(
-                  image: AssetImage(image),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
+            CustomImage.CustImage(image, w * .640, w * .300, BoxFit.cover),
 
             //column
             Padding(
@@ -1175,7 +1302,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       //mrp
                       AppFonts.textInter(
                         context,
-                        mrp,
+                        "₹${mrp}",
                         w * .038,
                         FontWeight.w800,
                         AppColors.blackFontColor,
@@ -1189,7 +1316,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       //total mrp
                       AppFonts.textInter(
                         context,
-                        "raised out of $totalMrp",
+                        "raised out of ₹$totalMrp",
                         w * .030,
                         FontWeight.w400,
                         AppColors.blackFontColor.withOpacity(.5),
@@ -1205,8 +1332,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   //slide
                   CustomSlide.customSlideTransition(
                     context: context,
-                    nowNumber: 47726,
-                    totalNumber: 64705,
+                    nowNumber: double.parse(mrp),
+                    totalNumber: double.parse(totalMrp),
                     width: w * .640 - w * .030,
                   ),
 
@@ -1386,95 +1513,95 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
 
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            //image
-            SizedBox(
-              height: coverImage.isEmpty ? w * .400 : w * .480,
-              width: w * .640,
-              child: Stack(
-                children: [
-                  Container(
-                    height: w * .400,
-                    width: w * .640,
-                    decoration: BoxDecoration(
-                      color: AppColors.whiteFontColor,
-                      image: DecorationImage(
-                        image: AssetImage(image),
-                        fit: BoxFit.cover,
-                      ),
+        child: Padding(
+          padding: EdgeInsets.only(bottom: w * .040),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              //image
+              SizedBox(
+                height: coverImage.isEmpty ? w * .400 : w * .480,
+                width: w * .640,
+                child: Stack(
+                  children: [
+                    CustomImage.CustImage(
+                      image,
+                      w * .640,
+                      w * .400,
+                      BoxFit.contain,
                     ),
-                  ),
 
-                  if (showMissingFound)
-                    Align(
-                      alignment: Alignment.bottomLeft,
-                      child: IntrinsicWidth(
-                        child: Container(
-                          height: w * .060,
-
-                          decoration: BoxDecoration(
-                            color:
-                                missingFoundText == "Missing"
-                                    ? Colors.red
-                                    : Colors.green,
-                            borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(w * .020),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(horizontal: w * .030),
-                            child: Center(
-                              child: AppFonts.textInter(
-                                context,
-                                missingFoundText,
-                                w * .032,
-                                FontWeight.w600,
-                                AppColors.whiteFontColor,
-                                TextAlign.start,
-                                TextOverflow.visible,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  if (coverImage.isNotEmpty)
-                    //icon
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: w * .030),
-                      child: Align(
+                    if (showMissingFound)
+                      Align(
                         alignment: Alignment.bottomLeft,
-                        child: Container(
-                          height: w * .200,
-                          width: w * .200,
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: w * .015,
-                                spreadRadius: w * .001,
-                                offset: const Offset(2, 2),
+                        child: IntrinsicWidth(
+                          child: Container(
+                            height: w * .060,
+
+                            decoration: BoxDecoration(
+                              color:
+                                  missingFoundText == "Missing"
+                                      ? Colors.red
+                                      : Colors.green,
+                              borderRadius: BorderRadius.only(
+                                topRight: Radius.circular(w * .020),
                               ),
-                            ],
-                            borderRadius: BorderRadius.circular(w * .200),
-                            color: AppColors.whiteFontColor,
-                            image: DecorationImage(
-                              image: AssetImage(coverImage),
-                              fit: BoxFit.cover,
+                            ),
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: w * .030,
+                              ),
+                              child: Center(
+                                child: AppFonts.textInter(
+                                  context,
+                                  missingFoundText,
+                                  w * .032,
+                                  FontWeight.w600,
+                                  AppColors.whiteFontColor,
+                                  TextAlign.start,
+                                  TextOverflow.visible,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                ],
+                    if (coverImage.isNotEmpty)
+                      //icon
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: w * .030),
+                        child: Align(
+                          alignment: Alignment.bottomLeft,
+                          child: Container(
+                            height: w * .200,
+                            width: w * .200,
+                            clipBehavior: Clip.hardEdge,
+                            decoration: BoxDecoration(
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.shadowColor,
+                                  blurRadius: w * .015,
+                                  spreadRadius: w * .001,
+                                  offset: const Offset(2, 2),
+                                ),
+                              ],
+                              borderRadius: BorderRadius.circular(w * .200),
+                              color: AppColors.whiteFontColor,
+                            ),
+                            child: CustomImage.CustImage(
+                              coverImage,
+                              w * .200,
+                              w * .200,
+                              BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
 
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: w * .020),
-              child: Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   //title
@@ -1487,7 +1614,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       FontWeight.w600,
                       AppColors.blackFontColor,
                       TextAlign.start,
-                      TextOverflow.visible,
+                      TextOverflow.ellipsis,
                     ),
                   ),
 
@@ -1497,24 +1624,29 @@ class _HomeScreenState extends State<HomeScreen> {
                   //description
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: w * .030),
-                    child: AppFonts.textInter(
-                      context,
-                      description,
-                      coverImage.isEmpty ? w * .028 : w * .038,
-                      FontWeight.w500,
-                      AppColors.blackFontColor.withOpacity(.5),
-                      TextAlign.start,
-                      TextOverflow.visible,
+                    child: SizedBox(
+                      height: w * .100,
+                      child: AppFonts.textInter(
+                        context,
+                        description.length > 57
+                            ? '${description.substring(0, 57)}...'
+                            : description,
+                        coverImage.isEmpty ? w * .028 : w * .038,
+                        FontWeight.w500,
+                        AppColors.blackFontColor.withOpacity(.5),
+                        TextAlign.start,
+                        TextOverflow.visible,
+                      ),
                     ),
                   ),
-
-                  //some space
-                  SizedBox(height: w * .020),
 
                   if (showSocialMediaIcons)
                     // row of social media icons
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: w * .030),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: w * .030,
+                        vertical: w * .020,
+                      ),
                       child: Row(
                         children: [
                           //facebook icon
@@ -1548,8 +1680,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
