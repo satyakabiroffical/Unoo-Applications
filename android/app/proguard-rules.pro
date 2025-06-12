@@ -1,0 +1,1 @@
+-keep class com.fluttercandies.photo_manager.** { *; }
