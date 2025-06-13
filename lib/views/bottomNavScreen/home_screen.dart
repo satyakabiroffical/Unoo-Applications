@@ -5,15 +5,17 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:unno/apis/homePage.api.dart';
 import 'package:unno/appPreferences/appColors.dart';
 import 'package:unno/controller/bottomNav.controller.dart';
+import 'package:unno/controller/homePage.controller.dart';
+import 'package:unno/utils/AutoChangingText.dart';
 import 'package:unno/utils/CustomNetworkImage.dart';
 import 'package:unno/utils/Custom_buttons.dart';
 import 'package:unno/utils/RouteTransition.dart';
 import 'package:unno/utils/custom_slide.dart';
 import 'package:unno/utils/custom_text.dart';
+import 'package:unno/views/donationRelated/contribution_screen.dart';
+import 'package:unno/views/donationRelated/fundDetail_screen.dart';
 import 'package:unno/views/homeRelated/notification_screen.dart';
 import 'package:unno/views/homeRelated/viewAll_screen.dart';
-
-import '../donationRelated/blood_bank_detail.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,6 +27,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   BottomNavController bottomNavController = Get.find<BottomNavController>();
   HomePageApi homePageApi = Get.put(HomePageApi());
+  HomePageController homePageController = Get.put(HomePageController());
   late ScrollController _scrollController;
   double _lastScrollOffset = 0.0;
 
@@ -152,25 +155,52 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-      body: ListView.builder(
-        controller: _scrollController,
-        itemCount: 1,
-        shrinkWrap: true,
-        physics: const BouncingScrollPhysics(),
-        itemBuilder: (context, index) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              //some space
-              SizedBox(height: w * .020),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await Future.delayed(const Duration(milliseconds: 500));
+          await homePageApi.getHomePageData();
+        },
+        child: ListView.builder(
+          controller: _scrollController,
+          itemCount: 1,
+          shrinkWrap: true,
+          physics: const BouncingScrollPhysics(),
+          itemBuilder: (context, index) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                //some space
+                SizedBox(height: w * .020),
 
-              //slider
-              Obx(
-                () =>
-                    homePageApi.gettingHomeData.value
-                        ? Skeletonizer(
-                          enabled: true,
-                          child: CarouselSlider(
+                //slider
+                Obx(
+                  () =>
+                      homePageApi.gettingHomeData.value
+                          ? Skeletonizer(
+                            enabled: true,
+                            child: CarouselSlider(
+                              options: CarouselOptions(
+                                autoPlay: true,
+                                enlargeCenterPage: false,
+                                enlargeFactor: 0.8,
+                                aspectRatio: 18 / 9,
+                                viewportFraction: 1,
+                              ),
+                              items:
+                                  ["", ""].map((i) {
+                                    return Builder(
+                                      builder: (BuildContext context) {
+                                        return Container(
+                                          height: w * .550,
+                                          width: w,
+                                          color: Colors.grey,
+                                        );
+                                      },
+                                    );
+                                  }).toList(),
+                            ),
+                          )
+                          : CarouselSlider(
                             options: CarouselOptions(
                               autoPlay: true,
                               enlargeCenterPage: false,
@@ -179,829 +209,516 @@ class _HomeScreenState extends State<HomeScreen> {
                               viewportFraction: 1,
                             ),
                             items:
-                                ["", ""].map((i) {
+                                homePageApi.bannerData.map((i) {
                                   return Builder(
                                     builder: (BuildContext context) {
-                                      return Container(
-                                        height: w * .550,
-                                        width: w,
-                                        color: Colors.grey,
+                                      return CustomImage.CustImage(
+                                        i.image,
+                                        w,
+                                        w * .550,
+                                        BoxFit.contain,
                                       );
                                     },
                                   );
                                 }).toList(),
                           ),
-                        )
-                        : CarouselSlider(
-                          options: CarouselOptions(
-                            autoPlay: true,
-                            enlargeCenterPage: false,
-                            enlargeFactor: 0.8,
-                            aspectRatio: 18 / 9,
-                            viewportFraction: 1,
-                          ),
-                          items:
-                              homePageApi.bannerData.map((i) {
-                                return Builder(
-                                  builder: (BuildContext context) {
-                                    return CustomImage.CustImage(
-                                      i.image,
-                                      w,
-                                      w * .550,
-                                      BoxFit.contain,
-                                    );
-                                  },
-                                );
-                              }).toList(),
-                        ),
-              ),
-
-              // //banner pic
-              // Container(
-              //   height: w * .550,
-              //   width: w,
-              //   decoration: BoxDecoration(
-              //     color: AppColors.primaryColorLight,
-              //     image: const DecorationImage(
-              //       image: AssetImage('assets/images/home1.png'),
-              //       fit: BoxFit.cover,
-              //     ),
-              //   ),
-
-              //   child: Padding(
-              //     padding: EdgeInsets.symmetric(
-              //       horizontal: w * .040,
-              //       vertical: w * .040,
-              //     ),
-              //     child: Column(
-              //       mainAxisAlignment: MainAxisAlignment.end,
-              //       crossAxisAlignment: CrossAxisAlignment.start,
-              //       children: [
-              //         //text on banner pic
-              //         AppFonts.textInter(
-              //           context,
-              //           'donation',
-              //           w * .084,
-              //           FontWeight.w700,
-              //           AppColors.whiteFontColor,
-              //           TextAlign.start,
-              //           TextOverflow.ellipsis,
-              //         ),
-              //         AppFonts.textInter(
-              //           context,
-              //           'FOR PEOPLE',
-              //           w * .058,
-              //           FontWeight.w700,
-              //           AppColors.whiteFontColor,
-              //           TextAlign.start,
-              //           TextOverflow.ellipsis,
-              //         ),
-
-              //         //some space
-              //         SizedBox(height: w * .020),
-
-              //         //button on banner pic
-              //         Container(
-              //           height: w * .090,
-              //           width: w * .360,
-              //           decoration: BoxDecoration(
-              //             color: AppColors.primaryColor,
-              //             borderRadius: BorderRadius.circular(w * .020),
-              //             boxShadow: [
-              //               BoxShadow(
-              //                 color: AppColors.whiteFontColor.withOpacity(.6),
-              //                 blurRadius: w * .030,
-              //                 spreadRadius: w * .001,
-              //                 offset: const Offset(2, 5),
-              //               ),
-              //             ],
-              //           ),
-              //           child: Center(
-              //             child: AppFonts.textInter(
-              //               context,
-              //               'Donate',
-              //               w * .035,
-              //               FontWeight.w700,
-              //               AppColors.whiteFontColor,
-              //               TextAlign.start,
-              //               TextOverflow.ellipsis,
-              //             ),
-              //           ),
-              //         ),
-              //       ],
-              //     ),
-              //   ),
-              // ),
-
-              //some space\
-              SizedBox(height: w * .040),
-
-              //text common widget
-              _textViewAllCommonWidget(context, 'Trending Fundraisers', () {
-                // Navigate to the view all screen
-                Navigator.push(
-                  context,
-                  SlideLeftRoute(page: const ViewAllScreen()),
-                );
-              }),
-
-              Obx(
-                () => Skeletonizer(
-                  enabled: homePageApi.gettingHomeData.value,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: w * 0.01),
-                    child: Row(
-                      children: List.generate(
-                        homePageApi.gettingHomeData.value
-                            ? 3
-                            : homePageApi.trendingFundRaisers.length,
-                        (index) => Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: w * 0.03,
-                            vertical: w * 0.04,
-                          ),
-                          child: _homePageCommonCard(
-                            context,
-                            homePageApi.gettingHomeData.value
-                                ? 'assets/images/home2.png'
-                                : homePageApi
-                                    .trendingFundRaisers[index]
-                                    .addFundraiserImageOrVideo
-                                    .isEmpty
-                                ? ""
-                                : homePageApi
-                                    .trendingFundRaisers[index]
-                                    .addFundraiserImageOrVideo
-                                    .first,
-                            homePageApi.gettingHomeData.value
-                                ? 'My Baby Battles For His Life...'
-                                : homePageApi
-                                    .trendingFundRaisers[index]
-                                    .fundTitle,
-                            homePageApi.gettingHomeData.value
-                                ? 'by Mahendar Reddy Bakangari'
-                                : "by ${homePageApi.trendingFundRaisers[index].userId.name}",
-                            homePageApi.gettingHomeData.value
-                                ? '47726'
-                                : homePageApi
-                                    .trendingFundRaisers[index]
-                                    .totalDonationAmount
-                                    .toString(), // Placeholder amount
-                            homePageApi.gettingHomeData.value
-                                ? '47726'
-                                : homePageApi
-                                    .trendingFundRaisers[index]
-                                    .fundRequired
-                                    .toString(), // Placeholder amount
-                            homePageApi.gettingHomeData.value
-                                ? '2479'
-                                : homePageApi
-                                    .trendingFundRaisers[index]
-                                    .supporterCount
-                                    .toString(),
-                            homePageApi.gettingHomeData.value
-                                ? '28'
-                                : homePageApi
-                                    .trendingFundRaisers[index]
-                                    .remainingDays
-                                    .toString(),
-                            () {
-                              // Handle donate
-                            },
-                            () {
-                              // Handle share
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
                 ),
-              ),
 
-              //some space
-              SizedBox(height: w * .010),
+                //some space\
+                SizedBox(height: w * .040),
 
-              //text common widget
-              _textViewAllCommonWidget(context, 'Top NGO,s', () {
-                // Navigate to the trending screen
-              }),
+                //text common widget
+                _textViewAllCommonWidget(context, 'Trending Fundraisers', () {
+                  // Navigate to the view all screen
+                  Navigator.push(
+                    context,
+                    SlideLeftRoute(page: const ViewAllScreen()),
+                  );
+                }),
 
-              Obx(
-                () => Skeletonizer(
-                  enabled: homePageApi.gettingHomeData.value,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: w * 0.01),
-                    child: Row(
-                      children: List.generate(
-                        homePageApi.gettingHomeData.value
-                            ? 3
-                            : homePageApi.topNgosList.length,
-                        (index) {
-                          return Padding(
+                Obx(
+                  () => Skeletonizer(
+                    enabled: homePageApi.gettingHomeData.value,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.symmetric(horizontal: w * 0.01),
+                      child: Row(
+                        children: List.generate(
+                          homePageApi.gettingHomeData.value
+                              ? 3
+                              : homePageApi.trendingFundRaisers.length,
+                          (index) => Padding(
                             padding: EdgeInsets.symmetric(
                               horizontal: w * 0.03,
                               vertical: w * 0.04,
                             ),
-                            child: _homePageCommonCard1(
-                              context,
-                              homePageApi.gettingHomeData.value
-                                  ? 'assets/images/home3.png'
-                                  : homePageApi.topNgosList[index].image,
-                              homePageApi.gettingHomeData.value
-                                  ? 'assets/images/home4.png'
-                                  : homePageApi
-                                      .topNgosList[index]
-                                      .backGroundImage,
-                              homePageApi.gettingHomeData.value
-                                  ? 'NGO Name'
-                                  : homePageApi.topNgosList[index].name,
-                              homePageApi.gettingHomeData.value
-                                  ? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-                                  : homePageApi.topNgosList[index].about,
-                              true,
-                              false,
-                              "",
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              //some space\
-              SizedBox(height: w * .030),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: w * .040),
-                child: Container(
-                  height: w * .300,
-                  width: w,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(w * .020),
-                    color: AppColors.primaryColor,
-                  ),
-
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          vertical: w * .030,
-                          horizontal: w * .035,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AppFonts.textInter(
-                              context,
-                              'Start Monthly Donation to \nSave Lives',
-                              w * .040,
-                              FontWeight.w700,
-                              AppColors.whiteFontColor,
-                              TextAlign.start,
-                              TextOverflow.visible,
-                            ),
-
-                            SizedBox(
-                              width: w * .340,
-                              child: AppButtons.loginLike(
-                                context,
-                                () {},
-                                AppFonts.textInter(
+                            child: InkWell(
+                              splashColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              onTap: () {
+                                Navigator.push(
                                   context,
-                                  'Donate',
-                                  w * .034,
-                                  FontWeight.w600,
-                                  AppColors.primaryColor,
-                                  TextAlign.start,
-                                  TextOverflow.visible,
-                                ),
-                                AppColors.whiteFontColor,
-                                false,
-                                w * .090,
-                                w * .015,
+                                  SlideLeftRoute(
+                                    page: FundDetailScreen(
+                                      id:
+                                          homePageApi.gettingHomeData.value
+                                              ? ""
+                                              : homePageApi
+                                                  .trendingFundRaisers[index]
+                                                  .id,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: _homePageCommonCard(
+                                context,
+                                homePageApi.gettingHomeData.value
+                                    ? 'assets/images/home2.png'
+                                    : homePageApi
+                                        .trendingFundRaisers[index]
+                                        .addFundraiserImageOrVideo
+                                        .isEmpty
+                                    ? ""
+                                    : homePageApi
+                                        .trendingFundRaisers[index]
+                                        .addFundraiserImageOrVideo
+                                        .first,
+                                homePageApi.gettingHomeData.value
+                                    ? 'My Baby Battles For His Life...'
+                                    : homePageApi
+                                        .trendingFundRaisers[index]
+                                        .fundTitle,
+                                homePageApi.gettingHomeData.value
+                                    ? 'by Mahendar Reddy Bakangari'
+                                    : "by ${homePageApi.trendingFundRaisers[index].userId.name}",
+                                homePageApi.gettingHomeData.value
+                                    ? '47726'
+                                    : homePageApi
+                                        .trendingFundRaisers[index]
+                                        .totalDonationAmount
+                                        .toString(), // Placeholder amount
+                                homePageApi.gettingHomeData.value
+                                    ? ""
+                                    : homePageApi.trendingFundRaisers[index].id,
+                                homePageApi.gettingHomeData.value
+                                    ? '47726'
+                                    : homePageApi
+                                        .trendingFundRaisers[index]
+                                        .fundRequired
+                                        .toString(), // Placeholder amount
+                                homePageApi.gettingHomeData.value
+                                    ? '2479'
+                                    : homePageApi
+                                        .trendingFundRaisers[index]
+                                        .supporterCount
+                                        .toString(),
+                                homePageApi.gettingHomeData.value
+                                    ? '28'
+                                    : homePageApi
+                                        .trendingFundRaisers[index]
+                                        .remainingDays
+                                        .toString(),
+                                () {
+                                  // Handle donate
+                                },
+                                () {
+                                  // Handle share
+                                },
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ),
-
-                      //image
-                      Image.asset('assets/images/home5.png', height: w * .280),
-                    ],
+                    ),
                   ),
                 ),
-              ),
 
-              //some space\
-              SizedBox(height: w * .060),
+                //some space
+                SizedBox(height: w * .010),
 
-              //text common widget
-              _textViewAllCommonWidget(context, 'Top Blood Bank', () {
-                // Navigate to the trending screen
-              }),
+                //text common widget
+                _textViewAllCommonWidget(context, 'Top NGO,s', () {
+                  // Navigate to the trending screen
+                }),
 
-              //  Navigator.push(
-              //       context,
-              //       SlideLeftRoute(page: BloodBankDetail()),
-              //     );
-              Obx(
-                () => Skeletonizer(
-                  enabled: homePageApi.gettingHomeData.value,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: EdgeInsets.symmetric(horizontal: w * 0.01),
+                Obx(
+                  () => Skeletonizer(
+                    enabled: homePageApi.gettingHomeData.value,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.symmetric(horizontal: w * 0.01),
+                      child: Row(
+                        children: List.generate(
+                          homePageApi.gettingHomeData.value
+                              ? 3
+                              : homePageApi.topNgosList.length,
+                          (index) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: w * 0.03,
+                                vertical: w * 0.04,
+                              ),
+                              child: _homePageCommonCard1(
+                                context,
+                                homePageApi.gettingHomeData.value
+                                    ? 'assets/images/home3.png'
+                                    : homePageApi.topNgosList[index].image,
+                                homePageApi.gettingHomeData.value
+                                    ? 'assets/images/home4.png'
+                                    : homePageApi
+                                        .topNgosList[index]
+                                        .backGroundImage,
+                                homePageApi.gettingHomeData.value
+                                    ? 'NGO Name'
+                                    : homePageApi.topNgosList[index].name,
+                                homePageApi.gettingHomeData.value
+                                    ? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+                                    : homePageApi.topNgosList[index].about,
+                                true,
+                                false,
+                                "",
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                //some space\
+                SizedBox(height: w * .030),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: w * .040),
+                  child: Container(
+                    height: w * .300,
+                    width: w,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(w * .020),
+                      color: AppColors.primaryColor,
+                    ),
+
                     child: Row(
-                      children: List.generate(
-                        homePageApi.gettingHomeData.value
-                            ? 3
-                            : homePageApi.topBloodBanks.length,
-                        (index) {
-                          return Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: w * .030,
-                              vertical: w * .040,
-                            ),
-                            child: _homePageCommonCard1(
-                              context,
-                              homePageApi.gettingHomeData.value
-                                  ? 'assets/images/home7.png'
-                                  : homePageApi.topBloodBanks[index].image,
-                              homePageApi.gettingHomeData.value
-                                  ? 'assets/images/home8.png'
-                                  : homePageApi
-                                      .topBloodBanks[index]
-                                      .backGroundImage,
-                              homePageApi.gettingHomeData.value
-                                  ? 'Blood Bank Name'
-                                  : homePageApi.topBloodBanks[index].name,
-                              homePageApi.gettingHomeData.value
-                                  ? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-                                  : homePageApi.topBloodBanks[index].address,
-                              true,
-                              false,
-                              "",
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              //some space\
-              SizedBox(height: w * .040),
-
-              //text common widget
-              _textViewAllCommonWidget(context, 'Latest Donation', () {
-                // Navigate to the trending screen
-              }),
-              SizedBox(
-                height: w * .750,
-                child: ListView.builder(
-                  itemCount: 3,
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: w * .010),
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: w * .030,
-                        vertical: w * .040,
-                      ),
-                      child: _homePageCommonCard1(
-                        context,
-                        'assets/images/home8.png',
-                        '',
-                        'Mr. Rahul Singh',
-                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique.  ',
-                        false,
-                        false,
-                        "",
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              SizedBox(height: w * .040),
-
-              //text common widget
-              _textViewAllCommonWidget(context, 'Latest Missing & Found', () {
-                // Navigate to the trending screen
-              }),
-              SizedBox(height: w * .010),
-              SizedBox(
-                height: w * .700,
-                child: ListView.builder(
-                  itemCount: 3,
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: w * .010),
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: w * .030,
-                        vertical: w * .040,
-                      ),
-                      child: _homePageCommonCard1(
-                        context,
-                        'assets/images/home9.png',
-                        '',
-                        index == 1 ? "Found a Wallet" : 'Wallet Missing',
-                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ',
-                        false,
-                        true,
-                        index == 1 ? "Found" : "Missing",
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              //some space
-              SizedBox(height: w * .040),
-
-              //color box
-              IntrinsicHeight(
-                child: Container(
-                  width: w,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryColorLight1,
-                  ),
-
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: w * .040,
-                      vertical: w * .080,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // button like container with 110 height and w width with center text
-                        Container(
-                          height: w * .110,
-                          width: w,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryColor,
-                            borderRadius: BorderRadius.circular(w * .020),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: w * .030,
-                                spreadRadius: w * .001,
-                                offset: const Offset(2, 5),
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: w * .030,
+                            horizontal: w * .035,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AppFonts.textInter(
+                                context,
+                                'Start Monthly Donation to \nSave Lives',
+                                w * .040,
+                                FontWeight.w700,
+                                AppColors.whiteFontColor,
+                                TextAlign.start,
+                                TextOverflow.visible,
+                              ),
+
+                              SizedBox(
+                                width: w * .340,
+                                child: AppButtons.loginLike(
+                                  context,
+                                  () {},
+                                  AppFonts.textInter(
+                                    context,
+                                    'Donate',
+                                    w * .034,
+                                    FontWeight.w600,
+                                    AppColors.primaryColor,
+                                    TextAlign.start,
+                                    TextOverflow.visible,
+                                  ),
+                                  AppColors.whiteFontColor,
+                                  false,
+                                  w * .090,
+                                  w * .015,
+                                ),
                               ),
                             ],
                           ),
-                          child: Center(
-                            child: AppFonts.textInter(
-                              context,
-                              'Causes you can raise funds for',
-                              w * .040,
-                              FontWeight.w700,
-                              AppColors.whiteFontColor,
-                              TextAlign.start,
-                              TextOverflow.visible,
-                            ),
-                          ),
                         ),
 
-                        //space
-                        SizedBox(height: w * .040),
-
-                        //text on color box
-                        Padding(
-                          padding: EdgeInsets.symmetric(horizontal: w * .050),
-                          child: AppFonts.textInter(
-                            context,
-                            'Be it for a personal need, social cause or a creative idea - you can count on us for the project that you want to raise funds for.',
-                            w * .030,
-                            FontWeight.w700,
-                            AppColors.blackFontColor.withOpacity(.5),
-                            TextAlign.center,
-                            TextOverflow.visible,
-                          ),
-                        ),
-
-                        //space
-                        SizedBox(height: w * .020),
-
-                        Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: w * .020,
-                          runSpacing: w * .020,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            homePageCommonCard2(
-                              context,
-                              'assets/icons/education.png',
-                              'Education',
-                            ),
-                            homePageCommonCard2(
-                              context,
-                              'assets/icons/medical.png',
-                              'Medical',
-                            ),
-                            homePageCommonCard2(
-                              context,
-                              'assets/icons/nonProfit.png',
-                              'Non-profit',
-                            ),
-                            homePageCommonCard2(
-                              context,
-                              'assets/icons/Memorials.png',
-                              'Memorials',
-                            ),
-                            homePageCommonCard2(
-                              context,
-                              'assets/icons/more.png',
-                              'Other\'s',
-                            ),
-                          ],
+                        //image
+                        Image.asset(
+                          'assets/images/home5.png',
+                          height: w * .280,
                         ),
                       ],
                     ),
                   ),
                 ),
-              ),
 
-              //some space
-              SizedBox(height: w * .070),
+                //some space\
+                SizedBox(height: w * .060),
 
-              //center text of Success Stories
-              Align(
-                alignment: Alignment.center,
-                child: AppFonts.textInter(
-                  context,
-                  'Success Stories',
-                  w * .055,
-                  FontWeight.w700,
-                  AppColors.blackFontColor,
-                  TextAlign.center,
-                  TextOverflow.visible,
-                ),
-              ),
-              //some space
-              SizedBox(height: w * .070),
+                //text common widget
+                _textViewAllCommonWidget(context, 'Top Blood Bank', () {
+                  // Navigate to the trending screen
+                }),
 
-              //slider
-              CarouselSlider(
-                options: CarouselOptions(
-                  autoPlay: true,
-                  enlargeCenterPage: true,
-                  enlargeStrategy: CenterPageEnlargeStrategy.scale,
-                  aspectRatio: 20 / 10,
-                  viewportFraction: 0.58,
-                ),
-                items:
-                    [
-                      "assets/images/home10.png",
-                      "assets/images/home10.png",
-                      "assets/images/home10.png",
-                    ].map((i) {
-                      return Builder(
-                        builder: (BuildContext context) {
-                          return Container(
-                            width: w * .900,
-                            height: w * .300,
-                            clipBehavior: Clip.hardEdge,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(w * .050),
-                              image: DecorationImage(
-                                image: AssetImage(i),
-                                fit: BoxFit.contain,
+                //  Navigator.push(
+                //       context,
+                //       SlideLeftRoute(page: BloodBankDetail()),
+                //     );
+                Obx(
+                  () => Skeletonizer(
+                    enabled: homePageApi.gettingHomeData.value,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.symmetric(horizontal: w * 0.01),
+                      child: Row(
+                        children: List.generate(
+                          homePageApi.gettingHomeData.value
+                              ? 3
+                              : homePageApi.topBloodBanks.length,
+                          (index) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: w * .030,
+                                vertical: w * .040,
                               ),
-                            ),
-                          );
-                        },
-                      );
-                    }).toList(),
-              ),
-
-              //some space
-              SizedBox(height: w * .020),
-
-              //text after slider which can also change with animation
-              Align(
-                alignment: Alignment.center,
-                child: Column(
-                  children: [
-                    AppFonts.textInter(
-                      context,
-                      'Rahul pal',
-                      w * .050,
-                      FontWeight.w600,
-                      AppColors.blackFontColor,
-                      TextAlign.center,
-                      TextOverflow.visible,
-                    ),
-
-                    // a primary color linethin line
-                    SizedBox(height: w * .010),
-                    Container(
-                      width: w * .160,
-                      height: w * .005,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryColor,
-                        borderRadius: BorderRadius.circular(w * .050),
+                              child: _homePageCommonCard1(
+                                context,
+                                homePageApi.gettingHomeData.value
+                                    ? 'assets/images/home7.png'
+                                    : homePageApi.topBloodBanks[index].image,
+                                homePageApi.gettingHomeData.value
+                                    ? 'assets/images/home8.png'
+                                    : homePageApi
+                                        .topBloodBanks[index]
+                                        .backGroundImage,
+                                homePageApi.gettingHomeData.value
+                                    ? 'Blood Bank Name'
+                                    : homePageApi.topBloodBanks[index].name,
+                                homePageApi.gettingHomeData.value
+                                    ? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+                                    : homePageApi.topBloodBanks[index].address,
+                                true,
+                                false,
+                                "",
+                              ),
+                            );
+                          },
+                        ),
                       ),
                     ),
-
-                    SizedBox(height: w * .010),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Image.asset(
-                              'assets/icons/Group.png',
-                              height: w * .050,
-                              width: w * .050,
-                            ),
-
-                            //some space
-                            SizedBox(width: w * .010),
-
-                            SizedBox(
-                              width: w * .550,
-                              child: AppFonts.textInter(
-                                context,
-                                'Unoo give me chance to live my life happily.',
-                                w * .048,
-                                FontWeight.w500,
-                                AppColors.blackFontColor.withOpacity(.7),
-                                TextAlign.center,
-                                TextOverflow.visible,
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(width: w * .010),
-
-                        Image.asset(
-                          'assets/icons/Group1.png',
-                          height: w * .050,
-                          width: w * .050,
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
 
-              //some space
-              SizedBox(height: w * .090),
+                //some space\
+                SizedBox(height: w * .040),
 
-              //container
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: w * .040),
-                child: IntrinsicHeight(
+                //text common widget
+                _textViewAllCommonWidget(context, 'Latest Donation', () {
+                  // Navigate to the trending screen
+                }),
+                SizedBox(
+                  height: w * .750,
+                  child: ListView.builder(
+                    itemCount: 3,
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.symmetric(horizontal: w * .010),
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: w * .030,
+                          vertical: w * .040,
+                        ),
+                        child: _homePageCommonCard1(
+                          context,
+                          'assets/images/home8.png',
+                          '',
+                          'Mr. Rahul Singh',
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse varius enim in eros elementum tristique.  ',
+                          false,
+                          false,
+                          "",
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                SizedBox(height: w * .040),
+
+                //text common widget
+                _textViewAllCommonWidget(context, 'Latest Missing & Found', () {
+                  // Navigate to the trending screen
+                }),
+
+                SizedBox(height: w * .010),
+
+                Obx(
+                  () => Skeletonizer(
+                    enabled: homePageApi.gettingHomeData.value,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      padding: EdgeInsets.symmetric(horizontal: w * 0.01),
+                      child: Row(
+                        children: List.generate(
+                          homePageApi.gettingHomeData.value
+                              ? 3
+                              : homePageApi.foundAndMissing.length,
+                          (index) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: w * .030,
+                                vertical: w * .040,
+                              ),
+                              child: _homePageCommonCard1(
+                                context,
+                                homePageApi.gettingHomeData.value
+                                    ? 'assets/images/home9.png'
+                                    : homePageApi
+                                        .foundAndMissing[index]
+                                        .image
+                                        .isNotEmpty
+                                    ? homePageApi
+                                        .foundAndMissing[index]
+                                        .image
+                                        .first
+                                    : 'assets/images/home9.png',
+                                '',
+                                homePageApi.gettingHomeData.value
+                                    ? "Found a Wallet"
+                                    : homePageApi.foundAndMissing[index].name,
+                                homePageApi.gettingHomeData.value
+                                    ? 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+                                    : homePageApi
+                                        .foundAndMissing[index]
+                                        .description
+                                        .toString(),
+                                false,
+                                true,
+                                homePageApi.gettingHomeData.value
+                                    ? index == 1
+                                        ? "Found"
+                                        : "Missing"
+                                    : homePageApi.foundAndMissing[index].type ==
+                                        'MISSING'
+                                    ? 'Missing'
+                                    : 'Found',
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                //some space
+                SizedBox(height: w * .040),
+
+                //color box
+                IntrinsicHeight(
                   child: Container(
                     width: w,
                     decoration: BoxDecoration(
-                      color: AppColors.whiteFontColor,
-                      borderRadius: BorderRadius.circular(w * .020),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.shadowColor,
-                          blurRadius: w * .010,
-                          spreadRadius: w * .001,
-                        ),
-                      ],
+                      color: AppColors.primaryColorLight1,
                     ),
 
                     child: Padding(
                       padding: EdgeInsets.symmetric(
                         horizontal: w * .040,
-                        vertical: w * .040,
+                        vertical: w * .080,
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          //text
-                          Align(
-                            alignment: Alignment.centerLeft,
+                          // button like container with 110 height and w width with center text
+                          Container(
+                            height: w * .110,
+                            width: w,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryColor,
+                              borderRadius: BorderRadius.circular(w * .020),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.shadowColor,
+                                  blurRadius: w * .030,
+                                  spreadRadius: w * .001,
+                                  offset: const Offset(2, 5),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: AppFonts.textInter(
+                                context,
+                                'Causes you can raise funds for',
+                                w * .040,
+                                FontWeight.w700,
+                                AppColors.whiteFontColor,
+                                TextAlign.start,
+                                TextOverflow.visible,
+                              ),
+                            ),
+                          ),
+
+                          //space
+                          SizedBox(height: w * .040),
+
+                          //text on color box
+                          Padding(
+                            padding: EdgeInsets.symmetric(horizontal: w * .050),
                             child: AppFonts.textInter(
                               context,
-                              'Featured In',
-                              w * .049,
+                              'Be it for a personal need, social cause or a creative idea - you can count on us for the project that you want to raise funds for.',
+                              w * .030,
                               FontWeight.w700,
-                              AppColors.blackFontColor,
-                              TextAlign.start,
+                              AppColors.blackFontColor.withOpacity(.5),
+                              TextAlign.center,
                               TextOverflow.visible,
                             ),
                           ),
 
-                          //some space
-                          SizedBox(height: w * .040),
+                          //space
+                          SizedBox(height: w * .020),
 
                           Wrap(
                             alignment: WrapAlignment.center,
-                            spacing: w * .060,
-                            runSpacing: w * .060,
+                            spacing: w * .020,
+                            runSpacing: w * .020,
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              IntrinsicWidth(
-                                child: Container(
-                                  height: w * .130,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(
-                                      w * .010,
-                                    ),
-                                    color: AppColors.primaryColor,
-                                  ),
-
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: w * .040,
-                                      vertical: w * .020,
-                                    ),
-                                    child: Image.asset(
-                                      'assets/icons/Logo.png',
-                                      width: w * .300,
-                                    ),
-                                  ),
-                                ),
+                              homePageCommonCard2(
+                                context,
+                                'assets/icons/education.png',
+                                'Education',
                               ),
-                              IntrinsicWidth(
-                                child: Container(
-                                  height: w * .130,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(
-                                      w * .010,
-                                    ),
-                                    color: AppColors.primaryColor,
-                                  ),
-
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: w * .040,
-                                      vertical: w * .020,
-                                    ),
-                                    child: Image.asset(
-                                      'assets/icons/Logo (1).png',
-                                      width: w * .300,
-                                    ),
-                                  ),
-                                ),
+                              homePageCommonCard2(
+                                context,
+                                'assets/icons/medical.png',
+                                'Medical',
                               ),
-                              IntrinsicWidth(
-                                child: Container(
-                                  height: w * .130,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(
-                                      w * .010,
-                                    ),
-                                    color: AppColors.primaryColor,
-                                  ),
-
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: w * .040,
-                                      vertical: w * .020,
-                                    ),
-                                    child: Image.asset(
-                                      'assets/icons/Logo (2).png',
-                                      width: w * .300,
-                                    ),
-                                  ),
-                                ),
+                              homePageCommonCard2(
+                                context,
+                                'assets/icons/nonProfit.png',
+                                'Non-profit',
                               ),
-                              IntrinsicWidth(
-                                child: Container(
-                                  height: w * .130,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(
-                                      w * .010,
-                                    ),
-                                    color: AppColors.primaryColor,
-                                  ),
-
-                                  child: Padding(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: w * .040,
-                                      vertical: w * .020,
-                                    ),
-                                    child: Image.asset(
-                                      'assets/icons/Logo (3).png',
-                                      width: w * .300,
-                                    ),
-                                  ),
-                                ),
+                              homePageCommonCard2(
+                                context,
+                                'assets/icons/Memorials.png',
+                                'Memorials',
+                              ),
+                              homePageCommonCard2(
+                                context,
+                                'assets/icons/more.png',
+                                'Other\'s',
                               ),
                             ],
                           ),
@@ -1010,144 +727,369 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
-              ),
 
-              //some space
-              SizedBox(height: w * .060),
+                //some space
+                SizedBox(height: w * .070),
 
-              //container with date
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: w * .040),
-                child: Container(
-                  width: w,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryColor,
-                    borderRadius: BorderRadius.circular(w * .008),
+                //center text of Success Stories
+                Align(
+                  alignment: Alignment.center,
+                  child: AppFonts.textInter(
+                    context,
+                    'Success Stories',
+                    w * .055,
+                    FontWeight.w700,
+                    AppColors.blackFontColor,
+                    TextAlign.center,
+                    TextOverflow.visible,
                   ),
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: w * .060,
-                      vertical: w * .060,
+                ),
+                //some space
+                SizedBox(height: w * .070),
+
+                //slider
+                Obx(
+                  () => Skeletonizer(
+                    enabled: homePageApi.gettingHomeData.value,
+                    child: CarouselSlider(
+                      options: CarouselOptions(
+                        autoPlay: true,
+                        enlargeCenterPage: true,
+                        enlargeStrategy: CenterPageEnlargeStrategy.scale,
+                        onPageChanged: (val, val1) {
+                          homePageController.currentIndex.value = val;
+                        },
+                        aspectRatio: 20 / 10,
+                        viewportFraction: 0.58,
+                      ),
+                      items:
+                          homePageApi.successStories.map((i) {
+                            return Builder(
+                              builder: (BuildContext context) {
+                                return Container(
+                                  width: w * .900,
+                                  height: w * .300,
+                                  clipBehavior: Clip.hardEdge,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(
+                                      w * .050,
+                                    ),
+                                  ),
+                                  child: CustomImage.CustImage(
+                                    homePageApi.gettingHomeData.value
+                                        ? ""
+                                        : i.image!,
+                                    w * .900,
+                                    w * .300,
+                                    BoxFit.cover,
+                                  ),
+                                );
+                              },
+                            );
+                          }).toList(),
                     ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  ),
+                ),
+
+                //some space
+                SizedBox(height: w * .020),
+
+                //text after slider which can also change with animation
+                Obx(
+                  () => AutoChangingText(
+                    textItems:
+                        homePageApi.gettingHomeData.value
+                            ? []
+                            : homePageApi.successStories,
+                    widthFactor: w,
+                  ),
+                ),
+                //some space
+                SizedBox(height: w * .090),
+
+                //container
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: w * .040),
+                  child: IntrinsicHeight(
+                    child: Container(
+                      width: w,
+                      decoration: BoxDecoration(
+                        color: AppColors.whiteFontColor,
+                        borderRadius: BorderRadius.circular(w * .020),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.shadowColor,
+                            blurRadius: w * .010,
+                            spreadRadius: w * .001,
+                          ),
+                        ],
+                      ),
+
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: w * .040,
+                          vertical: w * .040,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // column have two text one is date and onother is month like APR in column
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                AppFonts.textInter(
-                                  context,
-                                  '13',
-                                  w * .066,
-                                  FontWeight.w600,
-                                  AppColors.whiteFontColor,
-                                  TextAlign.start,
-                                  TextOverflow.visible,
-                                ),
-                                AppFonts.textInter(
-                                  context,
-                                  'APR',
-                                  w * .028,
-                                  FontWeight.w500,
-                                  AppColors.whiteFontColor,
-                                  TextAlign.start,
-                                  TextOverflow.visible,
-                                ),
-                              ],
+                            //text
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: AppFonts.textInter(
+                                context,
+                                'Featured In',
+                                w * .049,
+                                FontWeight.w700,
+                                AppColors.blackFontColor,
+                                TextAlign.start,
+                                TextOverflow.visible,
+                              ),
                             ),
 
                             //some space
-                            SizedBox(width: w * .040),
+                            SizedBox(height: w * .040),
 
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: w * .060,
+                              runSpacing: w * .060,
+                              crossAxisAlignment: WrapCrossAlignment.center,
                               children: [
-                                // row of text NEXT EVENT and a straight thin horizontal line of white color
-                                Row(
-                                  children: [
-                                    AppFonts.textInter(
-                                      context,
-                                      'Next Event',
-                                      w * .030,
-                                      FontWeight.w600,
-                                      AppColors.whiteFontColor,
-                                      TextAlign.start,
-                                      TextOverflow.visible,
+                                IntrinsicWidth(
+                                  child: Container(
+                                    height: w * .130,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        w * .010,
+                                      ),
+                                      color: AppColors.primaryColor,
                                     ),
 
-                                    //space
-                                    SizedBox(width: w * .040),
-
-                                    // thin horizontal line
-                                    Container(
-                                      width: w * .08,
-                                      height: w * .004,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.whiteFontColor,
-                                        borderRadius: BorderRadius.circular(
-                                          w * .050,
-                                        ),
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: w * .040,
+                                        vertical: w * .020,
+                                      ),
+                                      child: Image.asset(
+                                        'assets/icons/Logo.png',
+                                        width: w * .300,
                                       ),
                                     ),
-                                  ],
+                                  ),
                                 ),
+                                IntrinsicWidth(
+                                  child: Container(
+                                    height: w * .130,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        w * .010,
+                                      ),
+                                      color: AppColors.primaryColor,
+                                    ),
 
-                                // text
-                                AppFonts.textInter(
-                                  context,
-                                  'A day with our wonderful \nchildren ',
-                                  w * .038,
-                                  FontWeight.w700,
-                                  AppColors.whiteFontColor,
-                                  TextAlign.start,
-                                  TextOverflow.visible,
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: w * .040,
+                                        vertical: w * .020,
+                                      ),
+                                      child: Image.asset(
+                                        'assets/icons/Logo (1).png',
+                                        width: w * .300,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                IntrinsicWidth(
+                                  child: Container(
+                                    height: w * .130,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        w * .010,
+                                      ),
+                                      color: AppColors.primaryColor,
+                                    ),
+
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: w * .040,
+                                        vertical: w * .020,
+                                      ),
+                                      child: Image.asset(
+                                        'assets/icons/Logo (2).png',
+                                        width: w * .300,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                IntrinsicWidth(
+                                  child: Container(
+                                    height: w * .130,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        w * .010,
+                                      ),
+                                      color: AppColors.primaryColor,
+                                    ),
+
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: w * .040,
+                                        vertical: w * .020,
+                                      ),
+                                      child: Image.asset(
+                                        'assets/icons/Logo (3).png',
+                                        width: w * .300,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
                           ],
                         ),
-
-                        // circle button with forward arrow icon of primary color and circle have white color
-                        Container(
-                          height: w * .090,
-                          width: w * .090,
-                          decoration: BoxDecoration(
-                            color: AppColors.whiteFontColor,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.shadowColor,
-                                blurRadius: w * .030,
-                                spreadRadius: w * .001,
-                                offset: const Offset(2, 5),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Icon(
-                              Icons.arrow_forward,
-                              color: AppColors.primaryColor,
-                              size: w * .050,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
-              ),
 
-              //some space\
-              SizedBox(height: w * .50),
-            ],
-          );
-        },
+                //some space
+                SizedBox(height: w * .060),
+
+                //container with date
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: w * .040),
+                  child: Container(
+                    width: w,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryColor,
+                      borderRadius: BorderRadius.circular(w * .008),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: w * .060,
+                        vertical: w * .060,
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // column have two text one is date and onother is month like APR in column
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  AppFonts.textInter(
+                                    context,
+                                    '13',
+                                    w * .066,
+                                    FontWeight.w600,
+                                    AppColors.whiteFontColor,
+                                    TextAlign.start,
+                                    TextOverflow.visible,
+                                  ),
+                                  AppFonts.textInter(
+                                    context,
+                                    'APR',
+                                    w * .028,
+                                    FontWeight.w500,
+                                    AppColors.whiteFontColor,
+                                    TextAlign.start,
+                                    TextOverflow.visible,
+                                  ),
+                                ],
+                              ),
+
+                              //some space
+                              SizedBox(width: w * .040),
+
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // row of text NEXT EVENT and a straight thin horizontal line of white color
+                                  Row(
+                                    children: [
+                                      AppFonts.textInter(
+                                        context,
+                                        'Next Event',
+                                        w * .030,
+                                        FontWeight.w600,
+                                        AppColors.whiteFontColor,
+                                        TextAlign.start,
+                                        TextOverflow.visible,
+                                      ),
+
+                                      //space
+                                      SizedBox(width: w * .040),
+
+                                      // thin horizontal line
+                                      Container(
+                                        width: w * .08,
+                                        height: w * .004,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.whiteFontColor,
+                                          borderRadius: BorderRadius.circular(
+                                            w * .050,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+
+                                  // text
+                                  AppFonts.textInter(
+                                    context,
+                                    'A day with our wonderful \nchildren ',
+                                    w * .038,
+                                    FontWeight.w700,
+                                    AppColors.whiteFontColor,
+                                    TextAlign.start,
+                                    TextOverflow.visible,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+
+                          // circle button with forward arrow icon of primary color and circle have white color
+                          Container(
+                            height: w * .090,
+                            width: w * .090,
+                            decoration: BoxDecoration(
+                              color: AppColors.whiteFontColor,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.shadowColor,
+                                  blurRadius: w * .030,
+                                  spreadRadius: w * .001,
+                                  offset: const Offset(2, 5),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Icon(
+                                Icons.arrow_forward,
+                                color: AppColors.primaryColor,
+                                size: w * .050,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                //some space\
+                SizedBox(height: w * .50),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -1202,6 +1144,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String title,
     String name,
     String mrp,
+    String id,
     String totalMrp,
     String totalSupports,
     String daysLeft,
@@ -1457,7 +1400,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         width: w * .280,
                         child: AppButtons.loginLike(
                           context,
-                          () {},
+                          () {
+                            Navigator.push(
+                              context,
+                              SlideLeftRoute(page: ContributionScreen()),
+                            );
+                          },
                           AppFonts.textInter(
                             context,
                             "Donate",

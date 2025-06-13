@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:unno/appPreferences/apiUrls.dart';
 import 'package:unno/appPreferences/appColors.dart';
+import 'package:unno/models/found&missing.model.dart';
 import 'package:unno/models/homeBanner.model.dart';
+import 'package:unno/models/successStories.model.dart';
 import 'package:unno/models/topBloodBanks.model.dart';
 import 'package:unno/models/topNgos.model.dart';
 import 'package:unno/models/trendingFundraisers.model.dart';
@@ -26,6 +28,12 @@ class HomePageApi extends GetxController {
 
   //top blood banks
   RxList<TopBloodBanks> topBloodBanks = RxList();
+
+  //found and missing
+  RxList<FoundAndMissing> foundAndMissing = RxList();
+
+  //success Stories
+  RxList<SuccessStories> successStories = RxList();
 
   //get home page data api
   Future<bool> getHomePageData() async {
@@ -59,6 +67,18 @@ class HomePageApi extends GetxController {
         topBloodBanks.clear();
         for (dynamic items in data['topBloodBank']) {
           topBloodBanks.add(TopBloodBanks.fromJson(items));
+        }
+
+        //found and missing
+        foundAndMissing.clear();
+        for (dynamic items in data['topFoundAndMissing']) {
+          foundAndMissing.add(FoundAndMissing.fromJson(items));
+        }
+
+        //success stories
+        successStories.clear();
+        for (dynamic items in data['successStory']) {
+          successStories.add(SuccessStories.fromJson(items));
         }
       } else {
         Get.snackbar(

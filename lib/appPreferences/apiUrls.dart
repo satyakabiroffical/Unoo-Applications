@@ -4,4 +4,7 @@ class ApiUrls {
 
   //get home page data
   static String getHomePage = '$baseUrl/getHomePageData';
+
+  //getting fund details by id
+  static String getFundDetailsById = '$baseUrl/getFundRaiseById';
 }

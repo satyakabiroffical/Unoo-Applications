@@ -85,7 +85,7 @@ class _DonationScreenState extends State<DonationScreen> {
               () {
                 Navigator.push(
                   context,
-                  SlideLeftRoute(page: FundDetailScreen()),
+                  SlideLeftRoute(page: FundDetailScreen(id: "")),
                 );
               },
             ),

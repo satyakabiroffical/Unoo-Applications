@@ -1,15 +1,20 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:unno/apis/funds.api.dart';
 import 'package:unno/appPreferences/appColors.dart';
 import 'package:unno/controller/fundDetail.controller.dart';
+import 'package:unno/utils/CustomNetworkImage.dart';
 import 'package:unno/utils/RouteTransition.dart';
 import 'package:unno/utils/custom_slide.dart';
 import 'package:unno/utils/custom_text.dart';
 import 'package:unno/views/donationRelated/contribution_screen.dart';
 
 class FundDetailScreen extends StatefulWidget {
-  const FundDetailScreen({super.key});
+  String id;
+  FundDetailScreen({super.key, required this.id});
 
   @override
   State<FundDetailScreen> createState() => _FundDetailScreenState();
@@ -18,11 +23,14 @@ class FundDetailScreen extends StatefulWidget {
 class _FundDetailScreenState extends State<FundDetailScreen>
     with SingleTickerProviderStateMixin {
   FundDetailController fundDetailController = Get.put(FundDetailController());
+  FundApi fundApi = Get.put(FundApi());
   late TabController tabController;
 
   @override
   initState() {
     tabController = TabController(vsync: this, length: 3);
+    debugPrint(widget.id);
+    fundApi.getFundDetailsById(widget.id);
     // TODO: implement initState
     super.initState();
   }
@@ -43,14 +51,37 @@ class _FundDetailScreenState extends State<FundDetailScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // pic
-                  Container(
-                    height: w * 0.5,
-                    width: w,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(w * 0.02),
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/fundDetail.png'),
-                        fit: BoxFit.cover,
+                  Obx(
+                    () => Skeletonizer(
+                      enabled: fundApi.gettingFundDetails.value,
+                      child: Container(
+                        height: w * 0.5,
+                        width: w,
+                        clipBehavior: Clip.hardEdge,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(w * 0.02),
+                        ),
+
+                        child: CustomImage.CustImage(
+                          fundApi.gettingFundDetails.value
+                              ? ""
+                              : fundApi
+                                  .fundDetailsById
+                                  .first
+                                  .fundRaise
+                                  .addFundraiserImageOrVideo
+                                  .isEmpty
+                              ? ""
+                              : fundApi
+                                  .fundDetailsById
+                                  .first
+                                  .fundRaise
+                                  .addFundraiserImageOrVideo
+                                  .first,
+                          w,
+                          w * 0.5,
+                          BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),
@@ -59,249 +90,334 @@ class _FundDetailScreenState extends State<FundDetailScreen>
                   SizedBox(height: w * 0.03),
 
                   // text days left
-                  Row(
-                    children: [
-                      //clock icon
-                      Icon(
-                        Icons.access_time,
-                        color: AppColors.redColor,
-                        size: w * 0.04,
-                      ),
+                  Obx(
+                    () => Skeletonizer(
+                      enabled: fundApi.gettingFundDetails.value,
+                      child: Row(
+                        children: [
+                          //clock icon
+                          Icon(
+                            Icons.access_time,
+                            color: AppColors.redColor,
+                            size: w * 0.04,
+                          ),
 
-                      //text
-                      AppFonts.textInter(
-                        context,
-                        " 28 Days Left",
-                        w * 0.030,
-                        FontWeight.w600,
-                        AppColors.redColor,
-                        TextAlign.start,
-                        TextOverflow.visible,
+                          //text
+                          AppFonts.textInter(
+                            context,
+                            fundApi.gettingFundDetails.value
+                                ? " 28 Days Left"
+                                : " ${fundApi.fundDetailsById.first.fundRaise.remainingDays.toString()} Days Left",
+                            w * 0.030,
+                            FontWeight.w600,
+                            AppColors.redColor,
+                            TextAlign.start,
+                            TextOverflow.visible,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
 
                   //space from top
                   SizedBox(height: w * 0.03),
 
                   // title
-                  AppFonts.textInter(
-                    context,
-                    "My Son Is Fighting For His Life And We Need Your Support To Save Him",
-                    w * 0.045,
-                    FontWeight.w600,
-                    AppColors.blackFontColor,
-                    TextAlign.start,
-                    TextOverflow.visible,
+                  Obx(
+                    () => Skeletonizer(
+                      enabled: fundApi.gettingFundDetails.value,
+                      child: AppFonts.textInter(
+                        context,
+                        fundApi.gettingFundDetails.value
+                            ? "My Son Is Fighting For His Life And We Need Your Support To Save Him"
+                            : fundApi.fundDetailsById.first.fundRaise.fundTitle,
+                        w * 0.045,
+                        FontWeight.w600,
+                        AppColors.blackFontColor,
+                        TextAlign.start,
+                        TextOverflow.visible,
+                      ),
+                    ),
                   ),
 
                   //space from top
                   SizedBox(height: w * 0.02),
 
-                  // by some name
-                  AppFonts.textInter(
-                    context,
-                    "by Roshan Sharma",
-                    w * 0.033,
-                    FontWeight.w500,
-                    AppColors.blackFontColor.withOpacity(0.7),
-                    TextAlign.start,
-                    TextOverflow.visible,
+                  Obx(
+                    () => // by some name
+                        Skeletonizer(
+                      enabled: fundApi.gettingFundDetails.value,
+                      child: AppFonts.textInter(
+                        context,
+                        fundApi.gettingFundDetails.value
+                            ? "by Roshan Sharma"
+                            : "by ${fundApi.fundDetailsById.first.fundRaise.userId.name}",
+                        w * 0.033,
+                        FontWeight.w500,
+                        AppColors.blackFontColor.withOpacity(0.7),
+                        TextAlign.start,
+                        TextOverflow.visible,
+                      ),
+                    ),
                   ),
 
                   //space from top
                   SizedBox(height: w * 0.03),
 
                   //row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _donationCard(
-                        context,
-                        'Views Today',
-                        '0',
-                        'assets/icons/vision.png',
-                        false,
+                  Obx(
+                    () => Skeletonizer(
+                      enabled: fundApi.gettingFundDetails.value,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _donationCard(
+                            context,
+                            'Views Today',
+                            fundApi.gettingFundDetails.value
+                                ? '0'
+                                : fundApi
+                                    .fundDetailsById
+                                    .first
+                                    .fundRaise
+                                    .todayViews
+                                    .toString(),
+                            'assets/icons/vision.png',
+                            false,
+                          ),
+                          _donationCard(
+                            context,
+                            'Donation Today',
+                            '0',
+                            'assets/icons/donationToday.png',
+                            false,
+                          ),
+                          _donationCard(
+                            context,
+                            'Total donors',
+                            '0',
+                            'assets/icons/totalDonation.png',
+                            true,
+                          ),
+                        ],
                       ),
-                      _donationCard(
-                        context,
-                        'Donation Today',
-                        '0',
-                        'assets/icons/donationToday.png',
-                        false,
-                      ),
-                      _donationCard(
-                        context,
-                        'Total donors',
-                        '0',
-                        'assets/icons/totalDonation.png',
-                        true,
-                      ),
-                    ],
+                    ),
                   ),
 
                   //space from top
                   SizedBox(height: w * 0.03),
 
                   // container with raised amount
-                  IntrinsicHeight(
-                    child: Container(
-                      width: w,
-                      decoration: BoxDecoration(
-                        color: AppColors.whiteFontColor,
-                        borderRadius: BorderRadius.circular(w * 0.02),
-                        border: Border.all(
-                          color: Colors.grey.shade100,
-                          width: w * 0.002,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.shade100,
-                            blurRadius: 5,
-                            spreadRadius: 2,
-                            offset: Offset(5, 5),
+                  Obx(
+                    () => Skeletonizer(
+                      enabled: fundApi.gettingFundDetails.value,
+                      child: IntrinsicHeight(
+                        child: Container(
+                          width: w,
+                          decoration: BoxDecoration(
+                            color: AppColors.whiteFontColor,
+                            borderRadius: BorderRadius.circular(w * 0.02),
+                            border: Border.all(
+                              color: Colors.grey.shade100,
+                              width: w * 0.002,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.shade100,
+                                blurRadius: 5,
+                                spreadRadius: 2,
+                                offset: Offset(5, 5),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
 
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: w * 0.03,
-                          vertical: w * 0.03,
-                        ),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: w * 0.03,
+                              vertical: w * 0.03,
+                            ),
+                            child: Column(
                               children: [
                                 Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    //text
-                                    AppFonts.textInter(
-                                      context,
-                                      'raised of ',
-                                      w * 0.03,
-                                      FontWeight.w400,
-                                      AppColors.shadowColor.withOpacity(0.4),
-                                      TextAlign.start,
-                                      TextOverflow.visible,
+                                    Row(
+                                      children: [
+                                        //text
+                                        AppFonts.textInter(
+                                          context,
+                                          'raised of ',
+                                          w * 0.03,
+                                          FontWeight.w400,
+                                          AppColors.shadowColor.withOpacity(
+                                            0.4,
+                                          ),
+                                          TextAlign.start,
+                                          TextOverflow.visible,
+                                        ),
+
+                                        //text
+                                        AppFonts.textInter(
+                                          context,
+                                          //rupee  ,
+                                          fundApi.gettingFundDetails.value
+                                              ? '₹ 31,764'
+                                              : "₹ ${fundApi.fundDetailsById.first.fundRaise.totalDonationAmount.toString()}",
+                                          w * 0.035,
+                                          FontWeight.w400,
+                                          AppColors.primaryColor,
+                                          TextAlign.start,
+                                          TextOverflow.visible,
+                                        ),
+                                      ],
                                     ),
 
-                                    //text
-                                    AppFonts.textInter(
-                                      context,
-                                      //rupee  ,
-                                      '₹ 31,764',
-                                      w * 0.035,
-                                      FontWeight.w400,
-                                      AppColors.primaryColor,
-                                      TextAlign.start,
-                                      TextOverflow.visible,
+                                    Row(
+                                      children: [
+                                        //text
+                                        AppFonts.textInter(
+                                          context,
+                                          'Goal ',
+                                          w * 0.05,
+                                          FontWeight.w700,
+                                          AppColors.blackFontColor,
+                                          TextAlign.start,
+                                          TextOverflow.visible,
+                                        ),
+
+                                        //text
+                                        AppFonts.textInter(
+                                          context,
+                                          //rupee  ,
+                                          fundApi.gettingFundDetails.value
+                                              ? '₹ 31,764'
+                                              : "₹ ${fundApi.fundDetailsById.first.fundRaise.fundRequired.toString()}",
+                                          w * 0.05,
+                                          FontWeight.w500,
+                                          AppColors.blackFontColor,
+                                          TextAlign.start,
+                                          TextOverflow.visible,
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
 
+                                CustomSlide.customSlideTransition(
+                                  context: context,
+                                  nowNumber:
+                                      fundApi.gettingFundDetails.value
+                                          ? 31764
+                                          : fundApi
+                                              .fundDetailsById
+                                              .first
+                                              .fundRaise
+                                              .totalDonationAmount
+                                              .toDouble(),
+                                  totalNumber:
+                                      fundApi.gettingFundDetails.value
+                                          ? 31764
+                                          : fundApi
+                                              .fundDetailsById
+                                              .first
+                                              .fundRaise
+                                              .fundRequired
+                                              .toDouble(),
+                                  width: w - w * 0.05 - w * 0.03,
+                                ),
+
+                                //space from top
+                                SizedBox(height: w * 0.04),
+
                                 Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    //text
-                                    AppFonts.textInter(
-                                      context,
-                                      'Goal ₹ ',
-                                      w * 0.05,
-                                      FontWeight.w700,
-                                      AppColors.blackFontColor,
-                                      TextAlign.start,
-                                      TextOverflow.visible,
+                                    Row(
+                                      children: [
+                                        //text
+                                        AppFonts.textInter(
+                                          context,
+                                          //rupee  ,
+                                          fundApi.gettingFundDetails.value
+                                              ? '1519'
+                                              : fundApi
+                                                  .fundDetailsById
+                                                  .first
+                                                  .fundRaise
+                                                  .supporterCount
+                                                  .toString(),
+                                          w * 0.055,
+                                          FontWeight.w400,
+                                          AppColors.blackFontColor.withOpacity(
+                                            0.7,
+                                          ),
+                                          TextAlign.start,
+                                          TextOverflow.visible,
+                                        ),
+
+                                        //text
+                                        AppFonts.textInter(
+                                          context,
+                                          ' supporters',
+                                          w * 0.035,
+                                          FontWeight.w400,
+                                          AppColors.shadowColor.withOpacity(
+                                            0.4,
+                                          ),
+                                          TextAlign.start,
+                                          TextOverflow.visible,
+                                        ),
+                                      ],
                                     ),
 
-                                    //text
-                                    AppFonts.textInter(
-                                      context,
-                                      //rupee  ,
-                                      '32,346',
-                                      w * 0.05,
-                                      FontWeight.w500,
-                                      AppColors.blackFontColor,
-                                      TextAlign.start,
-                                      TextOverflow.visible,
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        //text
+                                        AppFonts.textInter(
+                                          context,
+                                          //rupee  ,
+                                          fundApi.gettingFundDetails.value
+                                              ? '28'
+                                              : fundApi
+                                                  .fundDetailsById
+                                                  .first
+                                                  .fundRaise
+                                                  .remainingDays
+                                                  .toString(),
+                                          w * 0.055,
+                                          FontWeight.w400,
+                                          AppColors.blackFontColor.withOpacity(
+                                            0.7,
+                                          ),
+                                          TextAlign.start,
+                                          TextOverflow.visible,
+                                        ),
+
+                                        //text
+                                        AppFonts.textInter(
+                                          context,
+                                          ' Days left',
+                                          w * 0.035,
+                                          FontWeight.w400,
+                                          AppColors.shadowColor.withOpacity(
+                                            0.4,
+                                          ),
+                                          TextAlign.start,
+                                          TextOverflow.visible,
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ],
                             ),
-
-                            CustomSlide.customSlideTransition(
-                              context: context,
-                              nowNumber: 31764,
-                              totalNumber: 32346,
-                              width: w - w * 0.05 - w * 0.03,
-                            ),
-
-                            //space from top
-                            SizedBox(height: w * 0.04),
-
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Row(
-                                  children: [
-                                    //text
-                                    AppFonts.textInter(
-                                      context,
-                                      //rupee  ,
-                                      '1519',
-                                      w * 0.055,
-                                      FontWeight.w400,
-                                      AppColors.blackFontColor.withOpacity(0.7),
-                                      TextAlign.start,
-                                      TextOverflow.visible,
-                                    ),
-
-                                    //text
-                                    AppFonts.textInter(
-                                      context,
-                                      ' supporters',
-                                      w * 0.035,
-                                      FontWeight.w400,
-                                      AppColors.shadowColor.withOpacity(0.4),
-                                      TextAlign.start,
-                                      TextOverflow.visible,
-                                    ),
-                                  ],
-                                ),
-
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    //text
-                                    AppFonts.textInter(
-                                      context,
-                                      //rupee  ,
-                                      '28',
-                                      w * 0.055,
-                                      FontWeight.w400,
-                                      AppColors.blackFontColor.withOpacity(0.7),
-                                      TextAlign.start,
-                                      TextOverflow.visible,
-                                    ),
-
-                                    //text
-                                    AppFonts.textInter(
-                                      context,
-                                      ' Days left',
-                                      w * 0.035,
-                                      FontWeight.w400,
-                                      AppColors.shadowColor.withOpacity(0.4),
-                                      TextAlign.start,
-                                      TextOverflow.visible,
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -311,90 +427,95 @@ class _FundDetailScreenState extends State<FundDetailScreen>
                   SizedBox(height: w * 0.04),
 
                   //row with 2 buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      //contribute button
-                      InkWell(
-                        onTap: () {
+                  Obx(
+                    () => Skeletonizer(
+                      enabled: fundApi.gettingFundDetails.value,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                           //contribute button
-                          Navigator.push(
-                            context,
-                            SlideLeftRoute(page: ContributionScreen()),
-                          );
-                        },
-                        child: Container(
-                          height: w * 0.12,
-                          width: w * 0.42,
-
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryColor,
-                            borderRadius: BorderRadius.circular(w * 0.02),
-                          ),
-
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              //heart icon with white color
-                              Icon(
-                                Icons.favorite,
-                                color: AppColors.whiteFontColor,
-                                size: w * 0.04,
-                              ),
-
-                              //some space
-                              SizedBox(width: w * 0.01),
-
-                              //text with white color
-                              AppFonts.textInter(
+                          InkWell(
+                            onTap: () {
+                              //contribute button
+                              Navigator.push(
                                 context,
-                                'Contribute',
-                                w * 0.038,
-                                FontWeight.w600,
-                                AppColors.whiteFontColor,
-                                TextAlign.center,
-                                TextOverflow.ellipsis,
+                                SlideLeftRoute(page: ContributionScreen()),
+                              );
+                            },
+                            child: Container(
+                              height: w * 0.12,
+                              width: w * 0.42,
+
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryColor,
+                                borderRadius: BorderRadius.circular(w * 0.02),
                               ),
-                            ],
-                          ),
-                        ),
-                      ),
 
-                      InkWell(
-                        onTap: () {
-                          //contribute button
-                        },
-                        child: Container(
-                          height: w * 0.12,
-                          width: w * 0.42,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  //heart icon with white color
+                                  Icon(
+                                    Icons.favorite,
+                                    color: AppColors.whiteFontColor,
+                                    size: w * 0.04,
+                                  ),
 
-                          decoration: BoxDecoration(
-                            color: AppColors.whiteFontColor,
-                            border: Border.all(
-                              color: AppColors.primaryColor,
-                              width: w * 0.002,
+                                  //some space
+                                  SizedBox(width: w * 0.01),
+
+                                  //text with white color
+                                  AppFonts.textInter(
+                                    context,
+                                    'Contribute',
+                                    w * 0.038,
+                                    FontWeight.w600,
+                                    AppColors.whiteFontColor,
+                                    TextAlign.center,
+                                    TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
-                            borderRadius: BorderRadius.circular(w * 0.02),
                           ),
 
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              //text with white color
-                              AppFonts.textInter(
-                                context,
-                                'Share now',
-                                w * 0.038,
-                                FontWeight.w600,
-                                AppColors.primaryColor,
-                                TextAlign.center,
-                                TextOverflow.ellipsis,
+                          InkWell(
+                            onTap: () {
+                              //contribute button
+                            },
+                            child: Container(
+                              height: w * 0.12,
+                              width: w * 0.42,
+
+                              decoration: BoxDecoration(
+                                color: AppColors.whiteFontColor,
+                                border: Border.all(
+                                  color: AppColors.primaryColor,
+                                  width: w * 0.002,
+                                ),
+                                borderRadius: BorderRadius.circular(w * 0.02),
                               ),
-                            ],
+
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  //text with white color
+                                  AppFonts.textInter(
+                                    context,
+                                    'Share now',
+                                    w * 0.038,
+                                    FontWeight.w600,
+                                    AppColors.primaryColor,
+                                    TextAlign.center,
+                                    TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
 
                   //space from top
@@ -402,228 +523,303 @@ class _FundDetailScreenState extends State<FundDetailScreen>
 
                   //supporters container
                   Obx(
-                    () => IntrinsicHeight(
-                      child: Container(
-                        width: w * 0.9,
-                        decoration: BoxDecoration(
-                          color: AppColors.whiteFontColor,
-                          borderRadius: BorderRadius.circular(w * 0.02),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.shadowColor.withOpacity(0.1),
-                              blurRadius: 10,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: w * 0.04,
-                            vertical: w * 0.04,
+                    () => Skeletonizer(
+                      enabled: fundApi.gettingFundDetails.value,
+                      child: IntrinsicHeight(
+                        child: Container(
+                          width: w * 0.9,
+                          decoration: BoxDecoration(
+                            color: AppColors.whiteFontColor,
+                            borderRadius: BorderRadius.circular(w * 0.02),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.shadowColor.withOpacity(0.1),
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                              ),
+                            ],
                           ),
-                          child: Column(
-                            children: [
-                              // Row with image and no of supports
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  //image
-                                  Image.asset(
-                                    'assets/icons/contribute1.png',
-                                    height: w * 0.065,
-                                    width: w * 0.065,
-                                  ),
 
-                                  //text
-                                  AppFonts.textInter(
-                                    context,
-                                    ' 100 Supporters',
-                                    w * 0.042,
-                                    FontWeight.w600,
-                                    AppColors.blackFontColor.withOpacity(0.7),
-                                    TextAlign.start,
-                                    TextOverflow.visible,
-                                  ),
-                                ],
-                              ),
-
-                              //divider line
-                              Divider(
-                                color: Colors.grey.shade200,
-                                thickness: 2,
-                                height: w * 0.03,
-                              ),
-
-                              //Row with most generous and rescent text and a vertical line in between
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  //most generous text
-                                  SizedBox(
-                                    width: w / 2.5,
-                                    child: Center(
-                                      child: AppFonts.textInter(
-                                        context,
-                                        'Most Generous',
-                                        w * 0.042,
-                                        FontWeight.w600,
-                                        AppColors.primaryColor,
-                                        TextAlign.start,
-                                        TextOverflow.visible,
-                                      ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: w * 0.04,
+                              vertical: w * 0.04,
+                            ),
+                            child: Column(
+                              children: [
+                                // Row with image and no of supports
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    //image
+                                    Image.asset(
+                                      'assets/icons/contribute1.png',
+                                      height: w * 0.065,
+                                      width: w * 0.065,
                                     ),
-                                  ),
 
-                                  //vertical line
-                                  Container(
-                                    height: w * 0.075,
-                                    width: 2,
-                                    color: Colors.grey.shade200,
-                                  ),
-
-                                  //rescent text
-                                  SizedBox(
-                                    width: w / 2.5,
-                                    child: Center(
-                                      child: AppFonts.textInter(
-                                        context,
-                                        'Rescent',
-                                        w * 0.042,
-                                        FontWeight.w600,
-                                        AppColors.blackFontColor.withOpacity(
-                                          0.7,
-                                        ),
-                                        TextAlign.start,
-                                        TextOverflow.visible,
-                                      ),
+                                    //text
+                                    AppFonts.textInter(
+                                      context,
+                                      fundApi.gettingFundDetails.value
+                                          ? ' 100 Supporters'
+                                          : ' ${fundApi.fundDetailsById.first.contributions.length} Supporters',
+                                      w * 0.042,
+                                      FontWeight.w600,
+                                      AppColors.blackFontColor.withOpacity(0.7),
+                                      TextAlign.start,
+                                      TextOverflow.visible,
                                     ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
 
-                              //space from top
-                              SizedBox(height: w * 0.02),
+                                //divider line
+                                Divider(
+                                  color: Colors.grey.shade200,
+                                  thickness: 2,
+                                  height: w * 0.03,
+                                ),
 
-                              //listview builder for supporters
-                              SizedBox(
-                                height:
-                                    fundDetailController.isShowMore.value
-                                        ? w * .5
-                                        : w * 0.3,
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  physics:
-                                      fundDetailController.isShowMore.value
-                                          ? BouncingScrollPhysics()
-                                          : NeverScrollableScrollPhysics(),
-                                  itemCount:
-                                      fundDetailController.isShowMore.value
-                                          ? 10
-                                          : 3,
-                                  itemBuilder: (context, index) {
-                                    return Padding(
-                                      padding: EdgeInsets.only(
-                                        bottom: w * 0.02,
-                                        right: w * .020,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          //Row with image and name
-                                          Row(
+                                // //Row with most generous and rescent text and a vertical line in between
+                                // Row(
+                                //   mainAxisAlignment:
+                                //       MainAxisAlignment.spaceAround,
+                                //   children: [
+                                //     //most generous text
+                                //     SizedBox(
+                                //       width: w / 2.5,
+                                //       child: Center(
+                                //         child: AppFonts.textInter(
+                                //           context,
+                                //           'Most Generous',
+                                //           w * 0.042,
+                                //           FontWeight.w600,
+                                //           AppColors.primaryColor,
+                                //           TextAlign.start,
+                                //           TextOverflow.visible,
+                                //         ),
+                                //       ),
+                                //     ),
+
+                                //     //vertical line
+                                //     Container(
+                                //       height: w * 0.075,
+                                //       width: 2,
+                                //       color: Colors.grey.shade200,
+                                //     ),
+
+                                //     //rescent text
+                                //     SizedBox(
+                                //       width: w / 2.5,
+                                //       child: Center(
+                                //         child: AppFonts.textInter(
+                                //           context,
+                                //           'Rescent',
+                                //           w * 0.042,
+                                //           FontWeight.w600,
+                                //           AppColors.blackFontColor.withOpacity(
+                                //             0.7,
+                                //           ),
+                                //           TextAlign.start,
+                                //           TextOverflow.visible,
+                                //         ),
+                                //       ),
+                                //     ),
+                                //   ],
+                                // ),
+
+                                //space from top
+                                SizedBox(height: w * 0.02),
+
+                                if (!fundApi.gettingFundDetails.value &&
+                                    fundApi
+                                        .fundDetailsById
+                                        .first
+                                        .contributions
+                                        .isNotEmpty)
+                                  //listview builder for supporters
+                                  SizedBox(
+                                    height:
+                                        fundDetailController.isShowMore.value
+                                            ? (w * 0.065 + w * 0.02) *
+                                                fundApi
+                                                    .fundDetailsById
+                                                    .first
+                                                    .contributions
+                                                    .length
+                                            : w * 0.3,
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      physics:
+                                          fundDetailController.isShowMore.value
+                                              ? NeverScrollableScrollPhysics()
+                                              : NeverScrollableScrollPhysics(),
+                                      itemCount:
+                                          fundApi.gettingFundDetails.value
+                                              ? fundDetailController
+                                                      .isShowMore
+                                                      .value
+                                                  ? 10
+                                                  : 3
+                                              : fundDetailController
+                                                  .isShowMore
+                                                  .value
+                                              ? fundApi
+                                                  .fundDetailsById
+                                                  .first
+                                                  .contributions
+                                                  .length
+                                              : fundApi
+                                                      .fundDetailsById
+                                                      .first
+                                                      .contributions
+                                                      .length >
+                                                  3
+                                              ? 3
+                                              : fundApi
+                                                  .fundDetailsById
+                                                  .first
+                                                  .contributions
+                                                  .length,
+                                      itemBuilder: (context, index) {
+                                        return Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: w * 0.02,
+                                            right: w * .020,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
-                                              //image
-                                              Container(
-                                                height: w * 0.065,
-                                                width: w * 0.065,
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: Image.asset(
-                                                  'assets/images/profile.png',
-                                                  height: w * 0.065,
-                                                  width: w * 0.065,
-                                                ),
+                                              //Row with image and name
+                                              Row(
+                                                children: [
+                                                  //image
+                                                  Container(
+                                                    height: w * 0.065,
+                                                    width: w * 0.065,
+                                                    clipBehavior: Clip.hardEdge,
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: CustomImage.CustImage(
+                                                      fundApi
+                                                              .gettingFundDetails
+                                                              .value
+                                                          ? ""
+                                                          : fundApi
+                                                                  .fundDetailsById
+                                                                  .first
+                                                                  .contributions[index]
+                                                                  .userId ==
+                                                              null
+                                                          ? ""
+                                                          : fundApi
+                                                              .fundDetailsById
+                                                              .first
+                                                              .contributions[index]
+                                                              .userId!
+                                                              .userImage,
+                                                      w * 0.065,
+                                                      w * 0.065,
+                                                      BoxFit.cover,
+                                                    ),
+                                                  ),
+
+                                                  //space from left
+                                                  SizedBox(width: w * 0.020),
+
+                                                  //name
+                                                  AppFonts.textInter(
+                                                    context,
+                                                    fundApi
+                                                            .gettingFundDetails
+                                                            .value
+                                                        ? 'Priya Sharma'
+                                                        : fundApi
+                                                                .fundDetailsById
+                                                                .first
+                                                                .contributions[index]
+                                                                .userId ==
+                                                            null
+                                                        ? ""
+                                                        : fundApi
+                                                            .fundDetailsById
+                                                            .first
+                                                            .contributions[index]
+                                                            .userId!
+                                                            .name,
+                                                    w * 0.038,
+                                                    FontWeight.w600,
+                                                    AppColors.blackFontColor
+                                                        .withOpacity(0.7),
+                                                    TextAlign.start,
+                                                    TextOverflow.visible,
+                                                  ),
+                                                ],
                                               ),
 
-                                              //space from left
-                                              SizedBox(width: w * 0.020),
-
-                                              //name
+                                              //dollar price
                                               AppFonts.textInter(
                                                 context,
-                                                'Priya Sharma',
+                                                fundApi.gettingFundDetails.value
+                                                    ? '\$ 45000'
+                                                    : "₹ ${fundApi.fundDetailsById.first.contributions[index].donationAmount.toString()}",
                                                 w * 0.038,
                                                 FontWeight.w600,
-                                                AppColors.blackFontColor
-                                                    .withOpacity(0.7),
+                                                AppColors.primaryColor,
                                                 TextAlign.start,
                                                 TextOverflow.visible,
                                               ),
                                             ],
                                           ),
+                                        );
+                                      },
+                                    ),
+                                  ),
 
-                                          //dollar price
-                                          AppFonts.textInter(
-                                            context,
-                                            '\$ 45000',
-                                            w * 0.038,
-                                            FontWeight.w600,
-                                            AppColors.primaryColor,
-                                            TextAlign.start,
-                                            TextOverflow.visible,
-                                          ),
-                                        ],
-                                      ),
-                                    );
+                                // space from top
+                                SizedBox(height: w * 0.015),
+
+                                //row with Show more text and arrow down icon in ios style
+                                InkWell(
+                                  onTap: () {
+                                    fundDetailController.isShowMore.value =
+                                        !fundDetailController.isShowMore.value;
                                   },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      //show more text
+                                      AppFonts.textInter(
+                                        context,
+                                        fundDetailController.isShowMore.value
+                                            ? 'Show less'
+                                            : 'Show more',
+                                        w * 0.038,
+                                        FontWeight.w600,
+                                        AppColors.primaryColor,
+                                        TextAlign.start,
+                                        TextOverflow.visible,
+                                      ),
+
+                                      //space from right
+                                      SizedBox(width: w * 0.015),
+
+                                      // ios style arrow down like \/
+                                      Icon(
+                                        fundDetailController.isShowMore.value
+                                            ? Icons.expand_less
+                                            : Icons.expand_more,
+                                        color: AppColors.primaryColor,
+                                        size: w * 0.075,
+                                        weight: w * 0.025,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-
-                              // space from top
-                              SizedBox(height: w * 0.015),
-
-                              //row with Show more text and arrow down icon in ios style
-                              InkWell(
-                                onTap: () {
-                                  fundDetailController.isShowMore.value =
-                                      !fundDetailController.isShowMore.value;
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    //show more text
-                                    AppFonts.textInter(
-                                      context,
-                                      fundDetailController.isShowMore.value
-                                          ? 'Show less'
-                                          : 'Show more',
-                                      w * 0.038,
-                                      FontWeight.w600,
-                                      AppColors.primaryColor,
-                                      TextAlign.start,
-                                      TextOverflow.visible,
-                                    ),
-
-                                    //space from right
-                                    SizedBox(width: w * 0.015),
-
-                                    // ios style arrow down like \/
-                                    Icon(
-                                      fundDetailController.isShowMore.value
-                                          ? Icons.expand_less
-                                          : Icons.expand_more,
-                                      color: AppColors.primaryColor,
-                                      size: w * 0.075,
-                                      weight: w * 0.025,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -632,184 +828,262 @@ class _FundDetailScreenState extends State<FundDetailScreen>
 
                   // space from bottom
                   SizedBox(height: w * 0.07),
-                  //supporters container
+
+                  //top contribution container
                   Obx(
-                    () => IntrinsicHeight(
-                      child: Container(
-                        width: w * 0.9,
-                        decoration: BoxDecoration(
-                          color: AppColors.whiteFontColor,
-                          borderRadius: BorderRadius.circular(w * 0.02),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.shadowColor.withOpacity(0.1),
-                              blurRadius: 10,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: w * 0.04,
-                            vertical: w * 0.04,
+                    () => Skeletonizer(
+                      enabled: fundApi.gettingFundDetails.value,
+                      child: IntrinsicHeight(
+                        child: Container(
+                          width: w * 0.9,
+                          decoration: BoxDecoration(
+                            color: AppColors.whiteFontColor,
+                            borderRadius: BorderRadius.circular(w * 0.02),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.shadowColor.withOpacity(0.1),
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                              ),
+                            ],
                           ),
-                          child: Column(
-                            children: [
-                              // Row with image and no of supports
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  //image
-                                  Image.asset(
-                                    'assets/icons/prizeCup1.png',
-                                    height: w * 0.065,
-                                    width: w * 0.065,
-                                  ),
 
-                                  //text
-                                  AppFonts.textInter(
-                                    context,
-                                    ' Top Contribution',
-                                    w * 0.042,
-                                    FontWeight.w600,
-                                    AppColors.blackFontColor.withOpacity(0.7),
-                                    TextAlign.start,
-                                    TextOverflow.visible,
-                                  ),
-                                ],
-                              ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: w * 0.04,
+                              vertical: w * 0.04,
+                            ),
+                            child: Column(
+                              children: [
+                                // Row with image and no of supports
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    //image
+                                    Image.asset(
+                                      'assets/icons/prizeCup1.png',
+                                      height: w * 0.065,
+                                      width: w * 0.065,
+                                    ),
 
-                              //divider line
-                              Divider(
-                                color: Colors.grey.shade200,
-                                thickness: 2,
-                                height: w * 0.03,
-                              ),
+                                    //text
+                                    AppFonts.textInter(
+                                      context,
+                                      ' Top Contribution',
+                                      w * 0.042,
+                                      FontWeight.w600,
+                                      AppColors.blackFontColor.withOpacity(0.7),
+                                      TextAlign.start,
+                                      TextOverflow.visible,
+                                    ),
+                                  ],
+                                ),
 
-                              //space from top
-                              SizedBox(height: w * 0.02),
+                                //divider line
+                                Divider(
+                                  color: Colors.grey.shade200,
+                                  thickness: 2,
+                                  height: w * 0.03,
+                                ),
 
-                              //listView builder for supporters
-                              SizedBox(
-                                height:
-                                    fundDetailController.isShowTopContr.value
-                                        ? w * .500
-                                        : w * 0.3,
-                                child: ListView.builder(
-                                  shrinkWrap: true,
-                                  physics:
-                                      fundDetailController.isShowTopContr.value
-                                          ? BouncingScrollPhysics()
-                                          : NeverScrollableScrollPhysics(),
-                                  itemCount:
-                                      fundDetailController.isShowTopContr.value
-                                          ? 10
-                                          : 3,
-                                  itemBuilder: (context, index) {
-                                    return Padding(
-                                      padding: EdgeInsets.only(
-                                        bottom: w * 0.02,
-                                        right: w * .020,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          //Row with image and name
-                                          Row(
+                                //space from top
+                                SizedBox(height: w * 0.02),
+
+                                //listView builder for supporters
+                                if (!fundApi.gettingFundDetails.value &&
+                                    fundApi
+                                        .fundDetailsById
+                                        .first
+                                        .contributions
+                                        .isNotEmpty)
+                                  //listview builder for supporters
+                                  SizedBox(
+                                    height:
+                                        fundDetailController
+                                                .isShowTopContr
+                                                .value
+                                            ? (w * 0.065 + w * 0.02) *
+                                                fundApi
+                                                    .fundDetailsById
+                                                    .first
+                                                    .topContribution
+                                                    .length
+                                            : w * 0.3,
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: NeverScrollableScrollPhysics(),
+                                      itemCount:
+                                          fundApi.gettingFundDetails.value
+                                              ? fundDetailController
+                                                      .isShowTopContr
+                                                      .value
+                                                  ? 10
+                                                  : 3
+                                              : fundDetailController
+                                                  .isShowTopContr
+                                                  .value
+                                              ? fundApi
+                                                  .fundDetailsById
+                                                  .first
+                                                  .topContribution
+                                                  .length
+                                              : fundApi
+                                                      .fundDetailsById
+                                                      .first
+                                                      .topContribution
+                                                      .length >
+                                                  3
+                                              ? 3
+                                              : fundApi
+                                                  .fundDetailsById
+                                                  .first
+                                                  .topContribution
+                                                  .length,
+                                      itemBuilder: (context, index) {
+                                        return Padding(
+                                          padding: EdgeInsets.only(
+                                            bottom: w * 0.02,
+                                            right: w * .020,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
                                             children: [
-                                              //image
-                                              Container(
-                                                height: w * 0.065,
-                                                width: w * 0.065,
-                                                decoration: BoxDecoration(
-                                                  shape: BoxShape.circle,
-                                                ),
-                                                child: Image.asset(
-                                                  'assets/images/profile.png',
-                                                  height: w * 0.065,
-                                                  width: w * 0.065,
-                                                ),
+                                              //Row with image and name
+                                              Row(
+                                                children: [
+                                                  //image
+                                                  Container(
+                                                    height: w * 0.065,
+                                                    width: w * 0.065,
+                                                    clipBehavior: Clip.hardEdge,
+                                                    decoration: BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: CustomImage.CustImage(
+                                                      fundApi
+                                                              .gettingFundDetails
+                                                              .value
+                                                          ? ""
+                                                          : fundApi
+                                                                  .fundDetailsById
+                                                                  .first
+                                                                  .topContribution[index]
+                                                                  .userId ==
+                                                              null
+                                                          ? ""
+                                                          : fundApi
+                                                              .fundDetailsById
+                                                              .first
+                                                              .topContribution[index]
+                                                              .userId!
+                                                              .userImage,
+                                                      w * 0.065,
+                                                      w * 0.065,
+                                                      BoxFit.cover,
+                                                    ),
+                                                  ),
+
+                                                  //space from left
+                                                  SizedBox(width: w * 0.020),
+
+                                                  //name
+                                                  AppFonts.textInter(
+                                                    context,
+                                                    fundApi
+                                                            .gettingFundDetails
+                                                            .value
+                                                        ? 'Priya Sharma'
+                                                        : fundApi
+                                                                .fundDetailsById
+                                                                .first
+                                                                .topContribution[index]
+                                                                .userId ==
+                                                            null
+                                                        ? ""
+                                                        : fundApi
+                                                            .fundDetailsById
+                                                            .first
+                                                            .topContribution[index]
+                                                            .userId!
+                                                            .name,
+                                                    w * 0.038,
+                                                    FontWeight.w600,
+                                                    AppColors.blackFontColor
+                                                        .withOpacity(0.7),
+                                                    TextAlign.start,
+                                                    TextOverflow.visible,
+                                                  ),
+                                                ],
                                               ),
 
-                                              //space from left
-                                              SizedBox(width: w * 0.020),
-
-                                              //name
+                                              //dollar price
                                               AppFonts.textInter(
                                                 context,
-                                                'Priya Sharma',
+                                                fundApi.gettingFundDetails.value
+                                                    ? '\$ 45000'
+                                                    : "₹ ${fundApi.fundDetailsById.first.topContribution[index].donationAmount.toString()}",
                                                 w * 0.038,
                                                 FontWeight.w600,
-                                                AppColors.blackFontColor
-                                                    .withOpacity(0.7),
+                                                AppColors.primaryColor,
                                                 TextAlign.start,
                                                 TextOverflow.visible,
                                               ),
                                             ],
                                           ),
+                                        );
+                                      },
+                                    ),
+                                  ),
 
-                                          //dollar price
-                                          AppFonts.textInter(
-                                            context,
-                                            '\$ 45000',
-                                            w * 0.038,
-                                            FontWeight.w600,
-                                            AppColors.primaryColor,
-                                            TextAlign.start,
-                                            TextOverflow.visible,
-                                          ),
-                                        ],
-                                      ),
-                                    );
+                                // space from top
+                                SizedBox(height: w * 0.015),
+
+                                //row with Show more text and arrow down icon in ios style
+                                InkWell(
+                                  onTap: () {
+                                    fundDetailController.isShowTopContr.value =
+                                        !fundDetailController
+                                            .isShowTopContr
+                                            .value;
                                   },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      //show more text
+                                      AppFonts.textInter(
+                                        context,
+                                        fundDetailController
+                                                .isShowTopContr
+                                                .value
+                                            ? 'Show less'
+                                            : 'Show more',
+                                        w * 0.038,
+                                        FontWeight.w600,
+                                        AppColors.primaryColor,
+                                        TextAlign.start,
+                                        TextOverflow.visible,
+                                      ),
+
+                                      //space from right
+                                      SizedBox(width: w * 0.015),
+
+                                      // ios style arrow down like \/
+                                      Icon(
+                                        fundDetailController
+                                                .isShowTopContr
+                                                .value
+                                            ? Icons.expand_less
+                                            : Icons.expand_more,
+                                        color: AppColors.primaryColor,
+                                        size: w * 0.075,
+                                        weight: w * 0.025,
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-
-                              // space from top
-                              SizedBox(height: w * 0.015),
-
-                              //row with Show more text and arrow down icon in ios style
-                              InkWell(
-                                onTap: () {
-                                  fundDetailController.isShowTopContr.value =
-                                      !fundDetailController
-                                          .isShowTopContr
-                                          .value;
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    //show more text
-                                    AppFonts.textInter(
-                                      context,
-                                      fundDetailController.isShowTopContr.value
-                                          ? 'Show less'
-                                          : 'Show more',
-                                      w * 0.038,
-                                      FontWeight.w600,
-                                      AppColors.primaryColor,
-                                      TextAlign.start,
-                                      TextOverflow.visible,
-                                    ),
-
-                                    //space from right
-                                    SizedBox(width: w * 0.015),
-
-                                    // ios style arrow down like \/
-                                    Icon(
-                                      fundDetailController.isShowTopContr.value
-                                          ? Icons.expand_less
-                                          : Icons.expand_more,
-                                      color: AppColors.primaryColor,
-                                      size: w * 0.075,
-                                      weight: w * 0.025,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -855,83 +1129,262 @@ class _FundDetailScreenState extends State<FundDetailScreen>
                   unselectedLabelColor: Colors.black,
                   dividerHeight: 0.0,
                   labelStyle: TextStyle(
-                    fontSize: w * .036,
+                    fontSize: w * .034,
                     fontWeight: FontWeight.w600,
                   ),
                   tabs: [
-                    Tab(text: "Overview (2)"),
-                    Tab(text: "Documents (3)"),
-                    Tab(text: "Comments (5)"),
+                    Tab(text: "Overview"),
+                    Tab(
+                      text:
+                          "Documents (${fundApi.gettingFundDetails.value ? 3 : fundApi.fundDetailsById.first.fundRaise.documents.length})",
+                    ),
+                    Tab(
+                      text:
+                          "Comments (${fundApi.gettingFundDetails.value ? 3 : fundApi.fundDetailsById.first.comments.length})",
+                    ),
                   ],
                 ),
               ),
             ),
 
-            /* Expanded(
+            SizedBox(
+              height: (w * 1.290 + w * .020),
               child: TabBarView(
                 controller: tabController,
                 children: [
                   // Tab 1: Overview
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: 200,
-                    ), // Set max height
+                  SizedBox(
+                    height: (w * 1.290 + w * .020),
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: w * 0.03),
-                      child: RichText(
-                        text: TextSpan(
-                          text:
-                              "Lorem ipsum dolor sit amet...", // Your long text
-                          style: TextStyle(
-                            fontSize: w * 0.04,
-                            color: AppColors.blackFontColor,
-                            fontWeight: FontWeight.w600,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: w * 0.03,
+                        vertical: w * .040,
+                      ),
+                      child: SingleChildScrollView(
+                        child: RichText(
+                          text: TextSpan(
+                            text:
+                                fundApi.gettingFundDetails.value
+                                    ? "Lorem ipsum dolor sit amet..."
+                                    : fundApi
+                                        .fundDetailsById
+                                        .first
+                                        .fundRaise
+                                        .writeYourStory
+                                        .isEmpty
+                                    ? "No OverView..."
+                                    : fundApi
+                                        .fundDetailsById
+                                        .first
+                                        .fundRaise
+                                        .writeYourStory, // Your long text
+                            style: TextStyle(
+                              fontSize: w * 0.038,
+                              color: AppColors.shadowColor.withOpacity(0.5),
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: 200,
-                    ), // Set max height
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: w * 0.03),
-                      child: RichText(
-                        text: TextSpan(
-                          text:
-                              "Lorem ipsum dolor sit amet...", // Your long text
-                          style: TextStyle(
-                            fontSize: w * 0.04,
-                            color: AppColors.blackFontColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
+                  SizedBox(
+                    height: (w * 1.290 + w * .020),
+                    child:
+                        fundApi
+                                    .fundDetailsById
+                                    .first
+                                    .fundRaise
+                                    .documents
+                                    .isEmpty &&
+                                !fundApi.gettingFundDetails.value
+                            ? Center(
+                              child: AppFonts.textInter(
+                                context,
+                                "No Documents Found..",
+                                w * .030,
+                                FontWeight.w500,
+                                AppColors.blackFontColor,
+                                TextAlign.center,
+                                TextOverflow.ellipsis,
+                              ),
+                            )
+                            : ListView.builder(
+                              itemCount:
+                                  fundApi.gettingFundDetails.value
+                                      ? 3
+                                      : fundApi
+                                          .fundDetailsById
+                                          .first
+                                          .fundRaise
+                                          .documents
+                                          .length,
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: w * .040,
+                                    vertical: w * .020,
+                                  ),
+                                  child: Container(
+                                    height: w * 1.290,
+
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        w * .020,
+                                      ),
+                                    ),
+                                    child: CustomImage.CustImage(
+                                      fundApi.gettingFundDetails.value
+                                          ? ""
+                                          : fundApi
+                                              .fundDetailsById
+                                              .first
+                                              .fundRaise
+                                              .documents[index],
+                                      w,
+                                      w * 1.290,
+                                      BoxFit.contain,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                   ),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: 200,
-                    ), // Set max height
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: w * 0.03),
-                      child: RichText(
-                        text: TextSpan(
-                          text:
-                              "Lorem ipsum dolor sit amet...", // Your long text
-                          style: TextStyle(
-                            fontSize: w * 0.04,
-                            color: AppColors.blackFontColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
+                  SizedBox(
+                    height: (w * 1.290 + w * .020),
+                    child:
+                        fundApi.fundDetailsById.first.comments.isEmpty &&
+                                !fundApi.gettingFundDetails.value
+                            ? Center(
+                              child: AppFonts.textInter(
+                                context,
+                                "No Comments yet..",
+                                w * .030,
+                                FontWeight.w500,
+                                AppColors.blackFontColor,
+                                TextAlign.center,
+                                TextOverflow.ellipsis,
+                              ),
+                            )
+                            : ListView.builder(
+                              itemCount:
+                                  fundApi.gettingFundDetails.value
+                                      ? 3
+                                      : fundApi
+                                          .fundDetailsById
+                                          .first
+                                          .comments
+                                          .length,
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: w * .040,
+                                    vertical: w * .020,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Container(
+                                            height: w * .130,
+                                            width: w * .130,
+                                            clipBehavior: Clip.hardEdge,
+                                            decoration: BoxDecoration(
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: CustomImage.CustImage(
+                                              fundApi.gettingFundDetails.value
+                                                  ? ""
+                                                  : fundApi
+                                                      .fundDetailsById
+                                                      .first
+                                                      .comments[index]
+                                                      .userId!
+                                                      .userImage,
+                                              w * .130,
+                                              w * .130,
+                                              BoxFit.contain,
+                                            ),
+                                          ),
+
+                                          //some horizontal space
+                                          SizedBox(width: w * .020),
+
+                                          //text of user name
+                                          AppFonts.textInter(
+                                            context,
+                                            fundApi.gettingFundDetails.value
+                                                ? ""
+                                                : fundApi
+                                                    .fundDetailsById
+                                                    .first
+                                                    .comments[index]
+                                                    .userId!
+                                                    .name,
+                                            w * .040,
+                                            FontWeight.bold,
+                                            AppColors.blackFontColor,
+                                            TextAlign.center,
+                                            TextOverflow.ellipsis,
+                                          ),
+
+                                          //some horizontal space
+                                          SizedBox(width: w * .020),
+
+                                          //text of user name
+                                          AppFonts.textInter(
+                                            context,
+                                            fundApi.gettingFundDetails.value
+                                                ? ""
+                                                : formatTimeAgo(
+                                                  fundApi
+                                                      .fundDetailsById
+                                                      .first
+                                                      .comments[index]
+                                                      .createdAt
+                                                      .toString(),
+                                                ),
+                                            w * .040,
+                                            FontWeight.bold,
+                                            AppColors.shadowColor.withOpacity(
+                                              0.3,
+                                            ),
+                                            TextAlign.center,
+                                            TextOverflow.ellipsis,
+                                          ),
+                                        ],
+                                      ),
+
+                                      //some space
+                                      SizedBox(height: w * .020),
+
+                                      //comments
+                                      AppFonts.textInter(
+                                        context,
+                                        fundApi.gettingFundDetails.value
+                                            ? ""
+                                            : fundApi
+                                                .fundDetailsById
+                                                .first
+                                                .comments[index]
+                                                .description,
+                                        w * .038,
+                                        FontWeight.w500,
+                                        AppColors.shadowColor.withOpacity(0.4),
+                                        TextAlign.start,
+                                        TextOverflow.visible,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
                   ),
                 ],
               ),
-            ), */
+            ),
 
             //space from bottom
             SizedBox(height: w * 0.07),
@@ -939,6 +1392,53 @@ class _FundDetailScreenState extends State<FundDetailScreen>
         ),
       ),
     );
+  }
+
+  String formatTimeAgo(String isoDateString) {
+    try {
+      final dateTime = DateTime.parse(isoDateString);
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
+
+      // Future dates
+      if (difference.isNegative) {
+        final futureDifference = dateTime.difference(now);
+
+        if (futureDifference.inDays > 365) {
+          return DateFormat('dd MMMM yyyy').format(dateTime); // "12 June 2025"
+        } else if (futureDifference.inDays >= 30) {
+          final months = (futureDifference.inDays / 30).floor();
+          return '$months month${months > 1 ? 's' : ''} later';
+        } else if (futureDifference.inDays >= 1) {
+          return '${futureDifference.inDays} day${futureDifference.inDays > 1 ? 's' : ''} later';
+        } else if (futureDifference.inHours >= 1) {
+          return '${futureDifference.inHours} hour${futureDifference.inHours > 1 ? 's' : ''} later';
+        } else if (futureDifference.inMinutes >= 1) {
+          return '${futureDifference.inMinutes} minute${futureDifference.inMinutes > 1 ? 's' : ''} later';
+        } else {
+          return 'Just now';
+        }
+      }
+      // Past dates
+      else {
+        if (difference.inDays > 365) {
+          return DateFormat('dd MMMM yyyy').format(dateTime); // "12 June 2025"
+        } else if (difference.inDays >= 30) {
+          final months = (difference.inDays / 30).floor();
+          return '$months month${months > 1 ? 's' : ''} ago';
+        } else if (difference.inDays >= 1) {
+          return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+        } else if (difference.inHours >= 1) {
+          return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+        } else if (difference.inMinutes >= 1) {
+          return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+        } else {
+          return 'Just now';
+        }
+      }
+    } catch (e) {
+      return 'Invalid date';
+    }
   }
 
   Widget _donationCard(
