@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -22,7 +20,7 @@ class FundApi extends GetxController {
     try {
       final response = await dio.get(
         ApiUrls.getFundDetailsById,
-        queryParameters: {'fundRaiseId': '68148a22319f2bd4d2fb70bf'},
+        queryParameters: {'fundRaiseId': id},
       );
 
       print(response);

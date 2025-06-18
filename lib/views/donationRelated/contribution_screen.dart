@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:unno/appPreferences/appColors.dart';
+import 'package:unno/controller/contribution.controller.dart';
 import 'package:unno/utils/CustomFormField.dart';
 import 'package:unno/utils/Custom_buttons.dart';
 import 'package:unno/utils/custom_text.dart';
@@ -17,18 +19,64 @@ class ContributionScreen extends StatefulWidget {
 class _ContributionScreenState extends State<ContributionScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  ContributionController contributionController = Get.put(
+    ContributionController(),
+  );
   TextEditingController name = TextEditingController();
   TextEditingController email = TextEditingController();
   TextEditingController phone = TextEditingController();
+  TextEditingController amount = TextEditingController();
   bool? isChecked = false;
-  final List<String> tips = ['10% (INR 450)', '15% (INR 675)', '20% (INR 900)'];
 
   // Initialize with the first value from tips list
-  String? selectedTip = '10% (INR 450)';
+  String? selectedTip = "";
 
   @override
   initState() {
+    contributionController.tip.addAll([
+      '10% (${contributionController.selectedCurrency.value} 100)',
+      '20% (${contributionController.selectedCurrency.value} 200)',
+      '30% (${contributionController.selectedCurrency.value} 300)',
+      'Others',
+    ]);
+
+    setState(() {
+      selectedTip = contributionController.tip[0];
+    });
+
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.index == 0) {
+        contributionController.selectedCurrency.value = "INR";
+        contributionController.selectedAmountIndex.value = 0;
+        contributionController.tip.clear();
+        contributionController.tip.addAll([
+          '10% (${contributionController.selectedCurrency.value} 100)',
+          '20% (${contributionController.selectedCurrency.value} 200)',
+          '30% (${contributionController.selectedCurrency.value} 300)',
+          'Others',
+        ]);
+
+        setState(() {
+          selectedTip = contributionController.tip[0];
+        });
+      } else {
+        contributionController.selectedCurrency.value = "USD";
+        contributionController.selectedAmountIndex.value = 0;
+        contributionController.tip.clear();
+        contributionController.tip.addAll([
+          '10% (${contributionController.selectedCurrency.value} 100)',
+          '20% (${contributionController.selectedCurrency.value} 200)',
+          '30% (${contributionController.selectedCurrency.value} 300)',
+          'Others',
+        ]);
+
+        setState(() {
+          selectedTip = contributionController.tip[0];
+        });
+      }
+    });
+
     super.initState();
   }
 
@@ -110,18 +158,59 @@ class _ContributionScreenState extends State<ContributionScreen>
                   textInsideContainer(
                     context,
                     'Most Contributors contribute approx 2500 to this Fundraiser',
+                    4,
+                    true,
                   ),
                   SizedBox(height: w * .02),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      textInsideContainer(context, '₹1000'),
-                      textInsideContainer(context, '₹2500'),
-                      textInsideContainer(context, '₹4000'),
-                      textInsideContainer(context, 'Other amount'),
-                    ],
+                  Obx(
+                    () => Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        textInsideContainer(
+                          context,
+                          contributionController.selectedCurrency.value == "INR"
+                              ? '₹1000'
+                              : "\$1000",
+                          0,
+                          false,
+                        ),
+                        textInsideContainer(
+                          context,
+                          contributionController.selectedCurrency.value == "INR"
+                              ? '₹2500'
+                              : "\$2500",
+                          1,
+                          false,
+                        ),
+                        textInsideContainer(
+                          context,
+                          contributionController.selectedCurrency.value == "INR"
+                              ? '₹4000'
+                              : "\$4000",
+                          2,
+                          false,
+                        ),
+                        textInsideContainer(context, 'Other amount', 3, false),
+                      ],
+                    ),
                   ),
                   SizedBox(height: w * .05),
+
+                  Obx(
+                    () =>
+                        contributionController.selectedAmountIndex.value == 3
+                            ? Padding(
+                              padding: EdgeInsets.only(bottom: w * .040),
+                              child: textFieldCommonWidget(
+                                context,
+                                "Enter Amount",
+                                amount,
+                                TextInputType.number,
+                                "Amount",
+                              ),
+                            )
+                            : SizedBox(),
+                  ),
                   IntrinsicHeight(
                     child: Container(
                       width: w,
@@ -143,7 +232,7 @@ class _ContributionScreenState extends State<ContributionScreen>
                                   flex: 5,
                                   child: AppFonts.textInter(
                                     context,
-                                    'Ketto is charging 0% platform fee* for this fundraiser, relying solely on the generosity of contributors like you. ',
+                                    'Unno is charging 0% platform fee* for this fundraiser, relying solely on the generosity of contributors like you. ',
                                     w * .031,
                                     FontWeight.w500,
                                     AppColors.blackFontColor,
@@ -216,7 +305,9 @@ class _ContributionScreenState extends State<ContributionScreen>
                                               alignment: Alignment.centerLeft,
                                               isExpanded: true,
                                               items:
-                                                  tips.map((String tip) {
+                                                  contributionController.tip.map((
+                                                    String tip,
+                                                  ) {
                                                     return DropdownMenuItem<
                                                       String
                                                     >(
@@ -427,28 +518,85 @@ class _ContributionScreenState extends State<ContributionScreen>
   }
 
   // text inside a colored container
-  Widget textInsideContainer(BuildContext context, String text) {
+  Widget textInsideContainer(
+    BuildContext context,
+    String text,
+    int index,
+    bool isAlwaysSelected,
+  ) {
     double w = MediaQuery.of(context).size.width;
-    return IntrinsicWidth(
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.primaryColorLight1,
-          border: Border.all(color: AppColors.primaryColor, width: w * .003),
-          borderRadius: BorderRadius.circular(w * .020),
-        ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            vertical: w * .010,
-            horizontal: w * .040,
+    return InkWell(
+      onTap: () {
+        if (!isAlwaysSelected) {
+          contributionController.selectedAmountIndex.value = index;
+          if (index == 0) {
+            contributionController.amountWithoutDonation.value = 1000;
+            contributionController.tip.clear();
+            contributionController.tip.addAll([
+              '10% (${contributionController.selectedCurrency.value} 100)',
+              '20% (${contributionController.selectedCurrency.value} 200)',
+              '30% (${contributionController.selectedCurrency.value} 300)',
+              'Others',
+            ]);
+
+            setState(() {
+              selectedTip = contributionController.tip[0];
+            });
+          } else if (index == 1) {
+            contributionController.amountWithoutDonation.value = 2500;
+            contributionController.tip.clear();
+            contributionController.tip.addAll([
+              '10% (${contributionController.selectedCurrency.value} 250)',
+              '20% (${contributionController.selectedCurrency.value} 500)',
+              '30% (${contributionController.selectedCurrency.value} 750)',
+              'Others',
+            ]);
+
+            setState(() {
+              selectedTip = contributionController.tip[0];
+            });
+          } else if (index == 2) {
+            contributionController.amountWithoutDonation.value = 4000;
+            contributionController.tip.clear();
+            contributionController.tip.addAll([
+              '10% (${contributionController.selectedCurrency.value} 400)',
+              '20% (${contributionController.selectedCurrency.value} 800)',
+              '30% (${contributionController.selectedCurrency.value} 1200)',
+              'Others',
+            ]);
+
+            setState(() {
+              selectedTip = contributionController.tip[0];
+            });
+          }
+        }
+      },
+      child: IntrinsicWidth(
+        child: Container(
+          decoration: BoxDecoration(
+            color:
+                isAlwaysSelected
+                    ? AppColors.primaryColorLight1
+                    : contributionController.selectedAmountIndex.value == index
+                    ? AppColors.primaryColorLight1
+                    : AppColors.whiteFontColor,
+            border: Border.all(color: AppColors.primaryColor, width: w * .003),
+            borderRadius: BorderRadius.circular(w * .020),
           ),
-          child: AppFonts.textInter(
-            context,
-            text,
-            w * .032,
-            FontWeight.w600,
-            AppColors.primaryColor,
-            TextAlign.center,
-            TextOverflow.visible,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              vertical: w * .010,
+              horizontal: w * .040,
+            ),
+            child: AppFonts.textInter(
+              context,
+              text,
+              w * .032,
+              FontWeight.w600,
+              AppColors.primaryColor,
+              TextAlign.center,
+              TextOverflow.visible,
+            ),
           ),
         ),
       ),

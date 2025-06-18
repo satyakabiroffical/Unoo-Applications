@@ -8,7 +8,6 @@ import 'package:unno/utils/RouteTransition.dart';
 import 'package:unno/utils/custom_text.dart';
 import 'package:unno/views/profileRelated/reelProfile_screen.dart';
 import 'package:video_player/video_player.dart';
-import 'package:get/get.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:permission_handler/permission_handler.dart';
 

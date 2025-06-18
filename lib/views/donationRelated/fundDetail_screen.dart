@@ -6,6 +6,7 @@ import 'package:skeletonizer/skeletonizer.dart';
 import 'package:unno/apis/funds.api.dart';
 import 'package:unno/appPreferences/appColors.dart';
 import 'package:unno/controller/fundDetail.controller.dart';
+import 'package:unno/models/fundDetails.model.dart';
 import 'package:unno/utils/CustomNetworkImage.dart';
 import 'package:unno/utils/RouteTransition.dart';
 import 'package:unno/utils/custom_slide.dart';
@@ -1147,244 +1148,43 @@ class _FundDetailScreenState extends State<FundDetailScreen>
               ),
             ),
 
-            SizedBox(
-              height: (w * 1.290 + w * .020),
-              child: TabBarView(
-                controller: tabController,
-                children: [
-                  // Tab 1: Overview
-                  SizedBox(
-                    height: (w * 1.290 + w * .020),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: w * 0.03,
-                        vertical: w * .040,
-                      ),
-                      child: SingleChildScrollView(
-                        child: RichText(
-                          text: TextSpan(
-                            text:
-                                fundApi.gettingFundDetails.value
-                                    ? "Lorem ipsum dolor sit amet..."
-                                    : fundApi
-                                        .fundDetailsById
-                                        .first
-                                        .fundRaise
-                                        .writeYourStory
-                                        .isEmpty
-                                    ? "No OverView..."
-                                    : fundApi
-                                        .fundDetailsById
-                                        .first
-                                        .fundRaise
-                                        .writeYourStory, // Your long text
-                            style: TextStyle(
-                              fontSize: w * 0.038,
-                              color: AppColors.shadowColor.withOpacity(0.5),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+            Obx(() {
+              // Get the screen width once
+              final w = MediaQuery.of(context).size.width;
+
+              // Handle loading state or empty fundDetails
+              if (fundApi.gettingFundDetails.value) {
+                return _buildLoadingState(w);
+              }
+
+              if (fundApi.fundDetailsById.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No fund details available',
+                    style: TextStyle(fontSize: w * 0.04),
                   ),
-                  SizedBox(
-                    height: (w * 1.290 + w * .020),
-                    child:
-                        fundApi
-                                    .fundDetailsById
-                                    .first
-                                    .fundRaise
-                                    .documents
-                                    .isEmpty &&
-                                !fundApi.gettingFundDetails.value
-                            ? Center(
-                              child: AppFonts.textInter(
-                                context,
-                                "No Documents Found..",
-                                w * .030,
-                                FontWeight.w500,
-                                AppColors.blackFontColor,
-                                TextAlign.center,
-                                TextOverflow.ellipsis,
-                              ),
-                            )
-                            : ListView.builder(
-                              itemCount:
-                                  fundApi.gettingFundDetails.value
-                                      ? 3
-                                      : fundApi
-                                          .fundDetailsById
-                                          .first
-                                          .fundRaise
-                                          .documents
-                                          .length,
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: w * .040,
-                                    vertical: w * .020,
-                                  ),
-                                  child: Container(
-                                    height: w * 1.290,
+                );
+              }
 
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(
-                                        w * .020,
-                                      ),
-                                    ),
-                                    child: CustomImage.CustImage(
-                                      fundApi.gettingFundDetails.value
-                                          ? ""
-                                          : fundApi
-                                              .fundDetailsById
-                                              .first
-                                              .fundRaise
-                                              .documents[index],
-                                      w,
-                                      w * 1.290,
-                                      BoxFit.contain,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                  ),
-                  SizedBox(
-                    height: (w * 1.290 + w * .020),
-                    child:
-                        fundApi.fundDetailsById.first.comments.isEmpty &&
-                                !fundApi.gettingFundDetails.value
-                            ? Center(
-                              child: AppFonts.textInter(
-                                context,
-                                "No Comments yet..",
-                                w * .030,
-                                FontWeight.w500,
-                                AppColors.blackFontColor,
-                                TextAlign.center,
-                                TextOverflow.ellipsis,
-                              ),
-                            )
-                            : ListView.builder(
-                              itemCount:
-                                  fundApi.gettingFundDetails.value
-                                      ? 3
-                                      : fundApi
-                                          .fundDetailsById
-                                          .first
-                                          .comments
-                                          .length,
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: w * .040,
-                                    vertical: w * .020,
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Container(
-                                            height: w * .130,
-                                            width: w * .130,
-                                            clipBehavior: Clip.hardEdge,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: CustomImage.CustImage(
-                                              fundApi.gettingFundDetails.value
-                                                  ? ""
-                                                  : fundApi
-                                                      .fundDetailsById
-                                                      .first
-                                                      .comments[index]
-                                                      .userId!
-                                                      .userImage,
-                                              w * .130,
-                                              w * .130,
-                                              BoxFit.contain,
-                                            ),
-                                          ),
+              final fundDetail = fundApi.fundDetailsById.first;
 
-                                          //some horizontal space
-                                          SizedBox(width: w * .020),
+              return SizedBox(
+                height: (w * 1.290 + w * .020),
+                child: TabBarView(
+                  controller: tabController,
+                  children: [
+                    // Tab 1: Overview
+                    _buildOverviewTab(w, fundDetail),
 
-                                          //text of user name
-                                          AppFonts.textInter(
-                                            context,
-                                            fundApi.gettingFundDetails.value
-                                                ? ""
-                                                : fundApi
-                                                    .fundDetailsById
-                                                    .first
-                                                    .comments[index]
-                                                    .userId!
-                                                    .name,
-                                            w * .040,
-                                            FontWeight.bold,
-                                            AppColors.blackFontColor,
-                                            TextAlign.center,
-                                            TextOverflow.ellipsis,
-                                          ),
+                    // Tab 2: Documents
+                    _buildDocumentsTab(w, fundDetail),
 
-                                          //some horizontal space
-                                          SizedBox(width: w * .020),
-
-                                          //text of user name
-                                          AppFonts.textInter(
-                                            context,
-                                            fundApi.gettingFundDetails.value
-                                                ? ""
-                                                : formatTimeAgo(
-                                                  fundApi
-                                                      .fundDetailsById
-                                                      .first
-                                                      .comments[index]
-                                                      .createdAt
-                                                      .toString(),
-                                                ),
-                                            w * .040,
-                                            FontWeight.bold,
-                                            AppColors.shadowColor.withOpacity(
-                                              0.3,
-                                            ),
-                                            TextAlign.center,
-                                            TextOverflow.ellipsis,
-                                          ),
-                                        ],
-                                      ),
-
-                                      //some space
-                                      SizedBox(height: w * .020),
-
-                                      //comments
-                                      AppFonts.textInter(
-                                        context,
-                                        fundApi.gettingFundDetails.value
-                                            ? ""
-                                            : fundApi
-                                                .fundDetailsById
-                                                .first
-                                                .comments[index]
-                                                .description,
-                                        w * .038,
-                                        FontWeight.w500,
-                                        AppColors.shadowColor.withOpacity(0.4),
-                                        TextAlign.start,
-                                        TextOverflow.visible,
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                  ),
-                ],
-              ),
-            ),
+                    // Tab 3: Comments
+                    _buildCommentsTab(w, fundDetail),
+                  ],
+                ),
+              );
+            }),
 
             //space from bottom
             SizedBox(height: w * 0.07),
@@ -1505,6 +1305,225 @@ class _FundDetailScreenState extends State<FundDetailScreen>
             AppColors.blackFontColor.withOpacity(0.7),
             TextAlign.start,
             TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOverviewTab(double w, FundDetails fundDetail) {
+    return SizedBox(
+      height: (w * 1.290 + w * .020),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: w * 0.03, vertical: w * .040),
+        child: SingleChildScrollView(
+          child: RichText(
+            text: TextSpan(
+              text:
+                  fundDetail.fundRaise?.writeYourStory?.isEmpty ?? true
+                      ? "No Overview available..."
+                      : fundDetail.fundRaise!.writeYourStory!,
+              style: TextStyle(
+                fontSize: w * 0.038,
+                color: AppColors.shadowColor.withOpacity(0.5),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper widget for Documents tab
+  Widget _buildDocumentsTab(double w, FundDetails fundDetail) {
+    final documents = fundDetail.fundRaise?.documents ?? [];
+
+    return SizedBox(
+      height: (w * 1.290 + w * .020),
+      child:
+          documents.isEmpty
+              ? Center(
+                child: AppFonts.textInter(
+                  context,
+                  "No Documents Found..",
+                  w * .030,
+                  FontWeight.w500,
+                  AppColors.blackFontColor,
+                  TextAlign.center,
+                  TextOverflow.ellipsis,
+                ),
+              )
+              : ListView.builder(
+                itemCount: documents.length,
+                itemBuilder: (context, index) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: w * .040,
+                      vertical: w * .020,
+                    ),
+                    child: Container(
+                      height: w * 1.290,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(w * .020),
+                      ),
+                      child: CustomImage.CustImage(
+                        documents[index],
+                        w,
+                        w * 1.290,
+                        BoxFit.contain,
+                      ),
+                    ),
+                  );
+                },
+              ),
+    );
+  }
+
+  // Helper widget for Comments tab
+  Widget _buildCommentsTab(double w, FundDetails fundDetail) {
+    final comments = fundDetail.comments ?? [];
+
+    return SizedBox(
+      height: (w * 1.290 + w * .020),
+      child:
+          comments.isEmpty
+              ? Center(
+                child: AppFonts.textInter(
+                  context,
+                  "No Comments yet..",
+                  w * .030,
+                  FontWeight.w500,
+                  AppColors.blackFontColor,
+                  TextAlign.center,
+                  TextOverflow.ellipsis,
+                ),
+              )
+              : ListView.builder(
+                itemCount: comments.length,
+                itemBuilder: (context, index) {
+                  final comment = comments[index];
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: w * .040,
+                      vertical: w * .020,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              height: w * .130,
+                              width: w * .130,
+                              clipBehavior: Clip.hardEdge,
+                              decoration: BoxDecoration(shape: BoxShape.circle),
+                              child: CustomImage.CustImage(
+                                comment.userId?.userImage ?? "",
+                                w * .130,
+                                w * .130,
+                                BoxFit.contain,
+                              ),
+                            ),
+                            SizedBox(width: w * .020),
+                            AppFonts.textInter(
+                              context,
+                              comment.userId?.name ?? "Unknown",
+                              w * .040,
+                              FontWeight.bold,
+                              AppColors.blackFontColor,
+                              TextAlign.center,
+                              TextOverflow.ellipsis,
+                            ),
+                            SizedBox(width: w * .020),
+                            AppFonts.textInter(
+                              context,
+                              formatTimeAgo(comment.createdAt.toString()),
+                              w * .040,
+                              FontWeight.bold,
+                              AppColors.shadowColor.withOpacity(0.3),
+                              TextAlign.center,
+                              TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: w * .020),
+                        AppFonts.textInter(
+                          context,
+                          comment.description ?? "",
+                          w * .038,
+                          FontWeight.w500,
+                          AppColors.shadowColor.withOpacity(0.4),
+                          TextAlign.start,
+                          TextOverflow.visible,
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+    );
+  }
+
+  // Loading state widget
+  Widget _buildLoadingState(double w) {
+    return SizedBox(
+      height: (w * 1.290 + w * .020),
+      child: TabBarView(
+        controller: tabController,
+        children: [
+          // Loading state for Overview tab
+          Center(child: CircularProgressIndicator()),
+
+          // Loading state for Documents tab
+          ListView.builder(
+            itemCount: 3,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: w * .040,
+                  vertical: w * .020,
+                ),
+                child: Container(height: w * 1.290, color: Colors.grey[200]),
+              );
+            },
+          ),
+
+          // Loading state for Comments tab
+          ListView.builder(
+            itemCount: 3,
+            itemBuilder: (context, index) {
+              return Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: w * .040,
+                  vertical: w * .020,
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: w * .065,
+                          backgroundColor: Colors.grey[300],
+                        ),
+                        SizedBox(width: w * .020),
+                        Container(
+                          width: w * 0.4,
+                          height: w * 0.04,
+                          color: Colors.grey[300],
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: w * .020),
+                    Container(
+                      width: double.infinity,
+                      height: w * 0.1,
+                      color: Colors.grey[200],
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
