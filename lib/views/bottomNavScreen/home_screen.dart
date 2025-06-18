@@ -1403,7 +1403,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           () {
                             Navigator.push(
                               context,
-                              SlideLeftRoute(page: ContributionScreen()),
+                              SlideLeftRoute(
+                                page: ContributionScreen(contributionId: id),
+                              ),
                             );
                           },
                           AppFonts.textInter(

@@ -9,12 +9,14 @@ class PhoneNumberField extends StatelessWidget {
   BuildContext context;
   final Function(PhoneNumber)? onChanged;
   final TextEditingController? controller;
+  final FocusNode? focusNode;
 
   PhoneNumberField({
     super.key,
     required this.context,
     required this.onChanged,
     required this.controller,
+    required this.focusNode,
   });
 
   @override
@@ -43,7 +45,7 @@ class PhoneNumberField extends StatelessWidget {
             Flexible(
               flex: 1,
               child: Container(
-                width: w * .250,
+                width: w * .290,
                 height: w * .130,
                 decoration: BoxDecoration(
                   color: const Color(0xFFF5F5F5),
@@ -73,7 +75,7 @@ class PhoneNumberField extends StatelessWidget {
                 context,
                 "Enter Phone Number",
                 1,
-                100,
+                10,
                 null,
                 null,
                 TextInputType.number,
@@ -83,7 +85,7 @@ class PhoneNumberField extends StatelessWidget {
                   return null;
                 },
                 false,
-                FocusNode(),
+                focusNode!,
                 false,
                 (val) {},
                 () {},

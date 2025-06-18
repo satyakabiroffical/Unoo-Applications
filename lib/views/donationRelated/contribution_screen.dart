@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:unno/apis/funds.api.dart';
 import 'package:unno/appPreferences/appColors.dart';
 import 'package:unno/controller/contribution.controller.dart';
 import 'package:unno/utils/CustomFormField.dart';
@@ -10,7 +11,8 @@ import 'package:unno/utils/payment_option.dart';
 import 'package:unno/utils/phone_field.dart';
 
 class ContributionScreen extends StatefulWidget {
-  const ContributionScreen({super.key});
+  String? contributionId;
+  ContributionScreen({super.key, this.contributionId});
 
   @override
   State<ContributionScreen> createState() => _ContributionScreenState();
@@ -22,17 +24,26 @@ class _ContributionScreenState extends State<ContributionScreen>
   ContributionController contributionController = Get.put(
     ContributionController(),
   );
-  TextEditingController name = TextEditingController();
-  TextEditingController email = TextEditingController();
-  TextEditingController phone = TextEditingController();
+  FundApi fundApi = Get.put(FundApi());
+
   TextEditingController amount = TextEditingController();
+  TextEditingController tipAmount = TextEditingController();
+  FocusNode focusNode1 = FocusNode();
+  FocusNode focusNode2 = FocusNode();
+  FocusNode focusNode3 = FocusNode();
+  FocusNode focusNode4 = FocusNode();
+  FocusNode focusNode5 = FocusNode();
   bool? isChecked = false;
 
   // Initialize with the first value from tips list
   String? selectedTip = "";
 
+  // For real-time form validation
+  final ValueNotifier<bool> _formValidNotifier = ValueNotifier<bool>(false);
+
   @override
   initState() {
+    contributionController.tip.clear();
     contributionController.tip.addAll([
       '10% (${contributionController.selectedCurrency.value} 100)',
       '20% (${contributionController.selectedCurrency.value} 200)',
@@ -43,6 +54,9 @@ class _ContributionScreenState extends State<ContributionScreen>
     setState(() {
       selectedTip = contributionController.tip[0];
     });
+
+    contributionController.totalTipAmount.value = "100";
+    contributionController.amountWithoutDonation.value = 1000;
 
     _tabController = TabController(length: 2, vsync: this);
     _tabController.addListener(() {
@@ -60,6 +74,9 @@ class _ContributionScreenState extends State<ContributionScreen>
         setState(() {
           selectedTip = contributionController.tip[0];
         });
+
+        contributionController.totalTipAmount.value = "100";
+        contributionController.amountWithoutDonation.value = 1000;
       } else {
         contributionController.selectedCurrency.value = "USD";
         contributionController.selectedAmountIndex.value = 0;
@@ -74,10 +91,64 @@ class _ContributionScreenState extends State<ContributionScreen>
         setState(() {
           selectedTip = contributionController.tip[0];
         });
+        contributionController.totalTipAmount.value = "100";
+        contributionController.amountWithoutDonation.value = 1000;
       }
     });
 
+    // Add listeners to all text controllers
+    contributionController.name.value.addListener(_checkFormValidity);
+    contributionController.email.value.addListener(_checkFormValidity);
+    contributionController.phone.value.addListener(_checkFormValidity);
+    amount.addListener(_checkFormValidity);
+    tipAmount.addListener(_checkFormValidity);
+
     super.initState();
+  }
+
+  void _checkFormValidity() {
+    final isNameValid =
+        contributionController.name.value.text.trim().isNotEmpty;
+    final isPhoneValid = contributionController.phone.value.text.length == 10;
+    final isEmailValid = _validateEmail(
+      contributionController.email.value.text.trim(),
+    );
+    final isAmountValid =
+        contributionController.amountWithoutDonation.value > 0;
+    final isTipValid =
+        contributionController.totalTipAmount.value.isNotEmpty &&
+        double.tryParse(contributionController.totalTipAmount.value) != null;
+
+    _formValidNotifier.value =
+        isNameValid &&
+        isPhoneValid &&
+        isEmailValid &&
+        isAmountValid &&
+        isTipValid;
+  }
+
+  @override
+  void dispose() {
+    // Remove listeners
+    contributionController.name.value.removeListener(_checkFormValidity);
+    contributionController.email.value.removeListener(_checkFormValidity);
+    contributionController.phone.value.removeListener(_checkFormValidity);
+    amount.removeListener(_checkFormValidity);
+    tipAmount.removeListener(_checkFormValidity);
+    _formValidNotifier.dispose();
+
+    _tabController.dispose();
+    contributionController.name.value.clear();
+    contributionController.email.value.clear();
+    contributionController.phone.value.clear();
+    amount.clear();
+    tipAmount.clear();
+    contributionController.amountWithoutDonation.value = 0.0;
+    contributionController.totalTipAmount.value = "";
+    contributionController.selectedCurrency.value = "INR";
+    contributionController.selectedAmountIndex.value = 0;
+    contributionController.tip.clear();
+    super.dispose();
   }
 
   @override
@@ -87,6 +158,7 @@ class _ContributionScreenState extends State<ContributionScreen>
       backgroundColor: AppColors.whiteFontColor,
       appBar: AppBar(
         backgroundColor: AppColors.whiteFontColor,
+        surfaceTintColor: AppColors.primaryColor,
         title: AppFonts.textInter(
           context,
           "Your Contribution",
@@ -201,12 +273,48 @@ class _ContributionScreenState extends State<ContributionScreen>
                         contributionController.selectedAmountIndex.value == 3
                             ? Padding(
                               padding: EdgeInsets.only(bottom: w * .040),
-                              child: textFieldCommonWidget(
+                              child: CustomFormField.custTextFormOther(
                                 context,
-                                "Enter Amount",
-                                amount,
+                                "Enter amount",
+                                1,
+                                6,
+                                null,
+                                null,
                                 TextInputType.number,
-                                "Amount",
+                                (val) {
+                                  if (val.isNotEmpty) {
+                                    contributionController
+                                        .amountWithoutDonation
+                                        .value = double.parse(val);
+                                    contributionController
+                                        .totalTipAmount
+                                        .value = (double.parse(val) * 0.1)
+                                        .toStringAsFixed(1);
+                                    contributionController.tip.clear();
+                                    contributionController.tip.addAll([
+                                      '10% (${contributionController.selectedCurrency.value} ${(double.parse(val) * 0.1).toStringAsFixed(1)})',
+                                      '20% (${contributionController.selectedCurrency.value} ${(double.parse(val) * 0.2).toStringAsFixed(1)})',
+                                      '30% (${contributionController.selectedCurrency.value} ${(double.parse(val) * 0.3).toStringAsFixed(1)})',
+                                      'Others',
+                                    ]);
+
+                                    setState(() {
+                                      selectedTip =
+                                          contributionController.tip[0];
+                                    });
+                                  }
+                                },
+                                amount,
+                                (val) {
+                                  return null;
+                                },
+                                false,
+                                focusNode1,
+                                false,
+                                (val) {
+                                  setState(() {});
+                                },
+                                () {},
                               ),
                             )
                             : SizedBox(),
@@ -250,6 +358,38 @@ class _ContributionScreenState extends State<ContributionScreen>
                                 ),
                               ],
                             ),
+                            if (selectedTip == "Others")
+                              SizedBox(height: w * .020),
+                            if (selectedTip == "Others")
+                              SizedBox(
+                                width: w,
+                                child: CustomFormField.custTextFormOther(
+                                  context,
+                                  "Enter tip amount",
+                                  1,
+                                  5,
+                                  null,
+                                  null,
+                                  TextInputType.number,
+                                  (val) {
+                                    contributionController
+                                        .totalTipAmount
+                                        .value = val;
+                                    setState(() {});
+                                  },
+                                  tipAmount,
+                                  (val) {
+                                    return null;
+                                  },
+                                  false,
+                                  focusNode2,
+                                  false,
+                                  (val) {
+                                    setState(() {});
+                                  },
+                                  () {},
+                                ),
+                              ),
                             SizedBox(height: w * .040),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -313,7 +453,7 @@ class _ContributionScreenState extends State<ContributionScreen>
                                                     >(
                                                       value: tip,
                                                       child: Text(
-                                                        "${tip}    ",
+                                                        "${tip} ",
                                                         style: TextStyle(
                                                           fontSize: w * 0.030,
                                                           color:
@@ -328,26 +468,33 @@ class _ContributionScreenState extends State<ContributionScreen>
                                                 setState(() {
                                                   selectedTip = newValue;
                                                 });
+
+                                                tipAmount.clear();
+
+                                                if (newValue != "Others") {
+                                                  // Extract the string and parse to double
+                                                  String amountString =
+                                                      newValue!.substring(
+                                                        9,
+                                                        newValue.length - 1,
+                                                      );
+
+                                                  contributionController
+                                                      .totalTipAmount
+                                                      .value = amountString;
+                                                } else {
+                                                  contributionController
+                                                      .totalTipAmount
+                                                      .value = "0";
+                                                }
+                                                setState(() {});
                                               },
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
-
-                                    //some space from top
                                     SizedBox(height: w * .020),
-
-                                    //text
-                                    AppFonts.textInter(
-                                      context,
-                                      "Total Amount: INR 2950",
-                                      w * .025,
-                                      FontWeight.w500,
-                                      AppColors.blackFontColor,
-                                      TextAlign.start,
-                                      TextOverflow.visible,
-                                    ),
                                   ],
                                 ),
                               ],
@@ -358,29 +505,28 @@ class _ContributionScreenState extends State<ContributionScreen>
                     ),
                   ),
 
-                  // space from top
                   SizedBox(height: w * .040),
 
-                  //name  text
                   textFieldCommonWidget(
                     context,
                     "Enter full name",
-                    name,
+                    contributionController.name.value,
                     TextInputType.text,
-                    "Full Name",
+                    "Full Name *",
+                    (val) {
+                      setState(() {});
+                    },
+                    focusNode3,
                   ),
                 ],
               ),
             ),
 
-            // row with checkbox and text
             Padding(
               padding: EdgeInsets.only(left: w * .010),
               child: Row(
                 children: [
-                  //checkbox
                   Checkbox(
-                    // fillColor: WidgetStatePropertyAll(AppColors.shadowColor),
                     value: isChecked,
                     activeColor: AppColors.primaryColor,
                     overlayColor: WidgetStatePropertyAll(
@@ -400,7 +546,6 @@ class _ContributionScreenState extends State<ContributionScreen>
                     ),
                   ),
 
-                  //text
                   AppFonts.textInter(
                     context,
                     "Make my contribution anonymous",
@@ -414,22 +559,23 @@ class _ContributionScreenState extends State<ContributionScreen>
               ),
             ),
 
-            //space from top
             SizedBox(height: w * .040),
 
-            //name  text
             Padding(
               padding: EdgeInsets.symmetric(horizontal: w * .040),
               child: textFieldCommonWidget(
                 context,
                 "Enter your email",
-                name,
+                contributionController.email.value,
                 TextInputType.text,
                 "Email ID *",
+                (val) {
+                  setState(() {});
+                },
+                focusNode4,
               ),
             ),
 
-            // space from top
             SizedBox(height: w * .030),
 
             Padding(
@@ -438,44 +584,148 @@ class _ContributionScreenState extends State<ContributionScreen>
                 children: [
                   PhoneNumberField(
                     context: context,
-                    onChanged: (val) {},
-                    controller: phone,
+                    onChanged: (val) {
+                      setState(() {});
+                    },
+                    controller: contributionController.phone.value,
+                    focusNode: focusNode5,
                   ),
 
-                  // space from top
                   SizedBox(height: w * .080),
-                  AppButtons.loginLike(
-                    context,
-                    () {
-                      showModalBottomSheet(
-                        context: context,
-                        builder: (context) => const PaymentOptionsBottomSheet(),
-                      ).then((selectedMethod) {
-                        if (selectedMethod != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Selected: $selectedMethod'),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: _formValidNotifier,
+                    builder: (context, isFormValid, child) {
+                      final totalAmount =
+                          contributionController.amountWithoutDonation.value +
+                          (double.tryParse(
+                                contributionController.totalTipAmount.value,
+                              ) ??
+                              0);
+                      final currencySymbol =
+                          contributionController.selectedCurrency.value == "INR"
+                              ? "₹"
+                              : "\$";
+
+                      return isFormValid
+                          ? AppButtons.loginLike(
+                            context,
+                            () {
+                              fundApi
+                                  .createDonationApi(context, {
+                                    "name":
+                                        contributionController.name.value.text,
+                                    "email":
+                                        contributionController.email.value.text,
+                                    "tipAmount": double.tryParse(
+                                      contributionController
+                                          .totalTipAmount
+                                          .value,
+                                    ),
+                                    "hide": isChecked,
+                                    "donationAmount": totalAmount,
+                                    "paymentMethod": "RAZORPAY",
+                                    "userId": "6815a20a1d536533ed37248e",
+                                    "transactionId": "tgdyajsh12345",
+                                    "fundRaiseFor": widget.contributionId,
+                                  })
+                                  .then((val) {
+                                    if (val) {
+                                      Navigator.pop(context);
+                                    }
+                                  });
+                            },
+                            AppFonts.textInter(
+                              context,
+                              "Proceed to contribute $currencySymbol${totalAmount.toStringAsFixed(2)}",
+                              w * .040,
+                              FontWeight.bold,
+                              AppColors.whiteFontColor,
+                              TextAlign.center,
+                              TextOverflow.ellipsis,
+                            ),
+                            AppColors.primaryColor,
+                            fundApi.gettingFundDetails.value,
+                            w * .130,
+                            w * .020,
+                          )
+                          : InkWell(
+                            splashColor: Colors.transparent,
+                            highlightColor: Colors.transparent,
+                            hoverColor: Colors.transparent,
+                            focusColor: Colors.transparent,
+                            onTap: () {
+                              if (contributionController
+                                  .name
+                                  .value
+                                  .text
+                                  .isEmpty) {
+                                Get.snackbar(
+                                  "Error",
+                                  "Name is required",
+                                  backgroundColor: Colors.red,
+                                  icon: Icon(Icons.close, color: Colors.white),
+                                );
+                              }
+
+                              if (!_validateEmail(
+                                contributionController.email.value.text,
+                              )) {
+                                Get.snackbar(
+                                  "Error",
+                                  "Enter valid email",
+                                  backgroundColor: Colors.red,
+                                  icon: Icon(Icons.close, color: Colors.white),
+                                );
+                              }
+
+                              if (contributionController
+                                  .phone
+                                  .value
+                                  .text
+                                  .isEmpty) {
+                                Get.snackbar(
+                                  "Error",
+                                  "Phone number is required",
+                                  backgroundColor: Colors.red,
+                                  icon: Icon(Icons.close, color: Colors.white),
+                                );
+                              } else if (contributionController
+                                      .phone
+                                      .value
+                                      .text
+                                      .length !=
+                                  10) {
+                                Get.snackbar(
+                                  "Error",
+                                  "Phone number must be of 10 digit",
+                                  backgroundColor: Colors.red,
+                                  icon: Icon(Icons.close, color: Colors.white),
+                                );
+                              }
+                            },
+                            child: Container(
+                              height: w * .130,
+                              width: w,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryColor.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(w * .020),
+                              ),
+                              child: Center(
+                                child: AppFonts.textInter(
+                                  context,
+                                  "Proceed to contribute $currencySymbol${totalAmount.toStringAsFixed(2)}",
+                                  w * .040,
+                                  FontWeight.bold,
+                                  AppColors.whiteFontColor,
+                                  TextAlign.center,
+                                  TextOverflow.ellipsis,
+                                ),
+                              ),
                             ),
                           );
-                        }
-                      });
                     },
-                    AppFonts.textInter(
-                      context,
-                      "Proceed to contribute ₹2500",
-                      w * .040,
-                      FontWeight.bold,
-                      AppColors.whiteFontColor,
-                      TextAlign.center,
-                      TextOverflow.ellipsis,
-                    ),
-                    AppColors.primaryColor,
-                    false,
-                    w * .130,
-                    w * .020,
                   ),
 
-                  // space from top
                   SizedBox(height: w * .020),
 
                   RichText(
@@ -508,6 +758,8 @@ class _ContributionScreenState extends State<ContributionScreen>
                       ],
                     ),
                   ),
+
+                  SizedBox(height: w * .700),
                 ],
               ),
             ),
@@ -517,7 +769,15 @@ class _ContributionScreenState extends State<ContributionScreen>
     );
   }
 
-  // text inside a colored container
+  bool _validateEmail(String email) {
+    if (email.isEmpty) return false;
+    final emailRegex = RegExp(
+      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+      caseSensitive: false,
+    );
+    return emailRegex.hasMatch(email);
+  }
+
   Widget textInsideContainer(
     BuildContext context,
     String text,
@@ -527,6 +787,8 @@ class _ContributionScreenState extends State<ContributionScreen>
     double w = MediaQuery.of(context).size.width;
     return InkWell(
       onTap: () {
+        amount.clear();
+        tipAmount.clear();
         if (!isAlwaysSelected) {
           contributionController.selectedAmountIndex.value = index;
           if (index == 0) {
@@ -542,6 +804,8 @@ class _ContributionScreenState extends State<ContributionScreen>
             setState(() {
               selectedTip = contributionController.tip[0];
             });
+
+            contributionController.totalTipAmount.value = "100";
           } else if (index == 1) {
             contributionController.amountWithoutDonation.value = 2500;
             contributionController.tip.clear();
@@ -555,6 +819,8 @@ class _ContributionScreenState extends State<ContributionScreen>
             setState(() {
               selectedTip = contributionController.tip[0];
             });
+
+            contributionController.totalTipAmount.value = "250";
           } else if (index == 2) {
             contributionController.amountWithoutDonation.value = 4000;
             contributionController.tip.clear();
@@ -568,7 +834,24 @@ class _ContributionScreenState extends State<ContributionScreen>
             setState(() {
               selectedTip = contributionController.tip[0];
             });
+
+            contributionController.totalTipAmount.value = "400";
+          } else {
+            contributionController.amountWithoutDonation.value = 0;
+            contributionController.totalTipAmount.value = "0";
+            contributionController.tip.clear();
+            contributionController.tip.addAll([
+              '10% (${contributionController.selectedCurrency.value} 0)',
+              '20% (${contributionController.selectedCurrency.value} 0)',
+              '30% (${contributionController.selectedCurrency.value} 0)',
+              'Others',
+            ]);
+
+            setState(() {
+              selectedTip = contributionController.tip[0];
+            });
           }
+          setState(() {});
         }
       },
       child: IntrinsicWidth(
@@ -603,19 +886,19 @@ class _ContributionScreenState extends State<ContributionScreen>
     );
   }
 
-  //text field common widget
   Widget textFieldCommonWidget(
     BuildContext context,
     String hint,
     TextEditingController controller,
     TextInputType type,
     String label,
+    Function(String val) onChange,
+    FocusNode focusNode,
   ) {
     double w = MediaQuery.of(context).size.width;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        //text
         AppFonts.textInter(
           context,
           label,
@@ -626,10 +909,8 @@ class _ContributionScreenState extends State<ContributionScreen>
           TextOverflow.ellipsis,
         ),
 
-        //space from top
         SizedBox(height: w * .020),
 
-        //text form field
         CustomFormField.custTextFormOther(
           context,
           hint,
@@ -638,15 +919,17 @@ class _ContributionScreenState extends State<ContributionScreen>
           null,
           null,
           type,
-          (val) {},
+          onChange,
           controller,
           (val) {
             return null;
           },
           false,
-          FocusNode(),
+          focusNode,
           false,
-          (val) {},
+          (val) {
+            setState(() {});
+          },
           () {},
         ),
       ],

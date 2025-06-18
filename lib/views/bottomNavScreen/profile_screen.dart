@@ -47,10 +47,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
-            
+
                 // some space
                 SizedBox(height: w * .02),
-            
+
                 //name of the user
                 AppFonts.textInter(
                   context,
@@ -58,11 +58,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   w * .05,
                   FontWeight.w600,
                   AppColors.blackFontColor,
-            
+
                   TextAlign.center,
                   TextOverflow.ellipsis,
                 ),
-            
+
                 //email text with light black font
                 AppFonts.textInter(
                   context,
@@ -70,14 +70,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   w * .038,
                   FontWeight.w400,
                   AppColors.blackFontColor.withOpacity(.7),
-            
+
                   TextAlign.center,
                   TextOverflow.ellipsis,
                 ),
-            
+
                 //some space from top
                 SizedBox(height: w * .02),
-            
+
                 //bio of the user
                 AppFonts.textInter(
                   context,
@@ -88,10 +88,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   TextAlign.center,
                   TextOverflow.visible,
                 ),
-            
+
                 //some space from top
                 SizedBox(height: w * .06),
-            
+
                 //inside row i want two containers with rounded corners
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -104,7 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: AppColors.primaryColorLight1,
                         borderRadius: BorderRadius.circular(w * .015),
                       ),
-            
+
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: w * .02),
                         child: Column(
@@ -120,7 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               TextAlign.center,
                               TextOverflow.ellipsis,
                             ),
-            
+
                             //  text which shows the 5000 with rupee symbols
                             AppFonts.textInter(
                               context,
@@ -135,7 +135,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     ),
-            
+
                     //second container
                     Container(
                       height: w * .18,
@@ -159,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               TextAlign.center,
                               TextOverflow.ellipsis,
                             ),
-            
+
                             //  text which shows no of active fundraisers
                             AppFonts.textInter(
                               context,
@@ -176,20 +176,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ],
                 ),
-            
+
                 SizedBox(height: w * .01),
-            
+
                 // first common widget
-                commonWidget(context, "Your reels", "assets/icons/reel1.png", () {
-                  Navigator.push(
-                    context,
-                    SlideLeftRoute(page: ReelProfileScreen()),
-                  );
-                }, false),
-            
+                commonWidget(
+                  context,
+                  "Your reels",
+                  "assets/icons/reel1.png",
+                  () {
+                    Navigator.push(
+                      context,
+                      SlideLeftRoute(page: ReelProfileScreen()),
+                    );
+                  },
+                  false,
+                ),
+
                 //some space of 10
                 SizedBox(height: w * .01),
-            
+
                 // first common widget
                 commonWidget(
                   context,
@@ -203,26 +209,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                   false,
                 ),
-            
+
                 SizedBox(height: w * .01),
-            
+
                 // first common widget
                 commonWidget(
                   context,
                   "Edit NGO",
                   "assets/icons/editNGO.png",
                   () {
-                    Navigator.push(
-                      context,
-                      SlideLeftRoute(page: FormScreen()),
-                    );
+                    Navigator.push(context, SlideLeftRoute(page: FormScreen()));
                   },
                   false,
                 ),
-            
+
                 //some space of 10
                 SizedBox(height: w * .01),
-            
+
                 // first common widget
                 commonWidget(
                   context,
@@ -233,10 +236,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                   true,
                 ),
-            
+
                 //some space of 10
                 SizedBox(height: w * .01),
-            
+
                 // first common widget
                 commonWidget(
                   context,
@@ -247,25 +250,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                   false,
                 ),
-            
-                //some space of 10
-                SizedBox(height: w * .01),
-            
-                // first common widget
-                commonWidget(
-                  context,
-                  "Inbox",
-                  "assets/icons/inbox.png",
-                  () {
-                    Navigator.push(context, SlideLeftRoute(page:  FormScreen1()));
 
-                  },
-                  false,
-                ),
-            
                 //some space of 10
                 SizedBox(height: w * .01),
-            
+
+                // first common widget
+                commonWidget(context, "Inbox", "assets/icons/inbox.png", () {
+                  Navigator.push(context, SlideLeftRoute(page: FormScreen1()));
+                }, false),
+
+                //some space of 10
+                SizedBox(height: w * .01),
+
                 // first common widget
                 commonWidget(
                   context,
@@ -274,10 +270,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   () {},
                   false,
                 ),
-            
+
                 //some space of 10
                 SizedBox(height: w * .01),
-            
+
                 // first common widget
                 commonWidget(
                   context,
@@ -294,7 +290,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  //common widget functiion
+  //common widget function
   Widget commonWidget(
     BuildContext context,
     String title,

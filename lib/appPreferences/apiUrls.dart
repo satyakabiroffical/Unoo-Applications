@@ -7,4 +7,7 @@ class ApiUrls {
 
   //getting fund details by id
   static String getFundDetailsById = '$baseUrl/getFundRaiseById';
+
+  //create donation
+  static String createDonation = '$baseUrl/createDonationForm';
 }

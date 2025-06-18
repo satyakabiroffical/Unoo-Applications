@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ContributionController extends GetxController {
@@ -18,4 +19,11 @@ class ContributionController extends GetxController {
 
   //tip amounts
   RxList<String> tip = RxList();
+
+  //total amount with donation
+  RxString totalTipAmount = '0'.obs;
+
+  Rx<TextEditingController> name = TextEditingController().obs;
+  Rx<TextEditingController> email = TextEditingController().obs;
+  Rx<TextEditingController> phone = TextEditingController().obs;
 }
